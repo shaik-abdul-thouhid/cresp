@@ -1,0 +1,73 @@
+{
+	"name": "Cresp - Creative Social Platform",
+	"short_name": "Cresp",
+	"description": "A creative social media platform for directors, actors, writers, singers, photographers, and all creative professionals. Showcase your work, gain recognition, and collaborate on amazing projects.",
+	"start_url": "/",
+	"display": "standalone",
+	"background_color": "#1e1b4b",
+	"theme_color": "#8b5cf6",
+	"orientation": "portrait-primary",
+	"scope": "/",
+	"categories": ["social", "entertainment", "productivity"],
+	"icons": [
+		{
+			"src": "/images/sp.png",
+			"sizes": "192x192",
+			"type": "image/png",
+			"purpose": "any maskable"
+		},
+		{
+			"src": "/images/sp.png",
+			"sizes": "512x512",
+			"type": "image/png",
+			"purpose": "any maskable"
+		}
+	],
+	"screenshots": [
+		{
+			"src": "/images/cresp.png",
+			"sizes": "540x720",
+			"type": "image/png",
+			"form_factor": "narrow"
+		}
+	],
+	"shortcuts": [
+		{
+			"name": "Feed",
+			"short_name": "Feed",
+			"description": "View your creative feed",
+			"url": "/feed",
+			"icons": [
+				{
+					"src": "/images/sp.png",
+					"sizes": "96x96"
+				}
+			]
+		},
+		{
+			"name": "Discover",
+			"short_name": "Discover",
+			"description": "Discover new creatives",
+			"url": "/discover",
+			"icons": [
+				{
+					"src": "/images/sp.png",
+					"sizes": "96x96"
+				}
+			]
+		},
+		{
+			"name": "Collaborations",
+			"short_name": "Collaborate",
+			"description": "View collaboration projects",
+			"url": "/collaborations",
+			"icons": [
+				{
+					"src": "/images/sp.png",
+					"sizes": "96x96"
+				}
+			]
+		}
+	]
+}
+

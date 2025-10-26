@@ -1,0 +1,155 @@
+@import "tailwindcss";
+
+@theme {
+	--font-sans: var(--font-geist-sans), ui-sans-serif, system-ui, sans-serif,
+		"Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol", "Noto Color Emoji";
+	--font-cursive: var(--font-dancing-script), cursive;
+}
+
+/* Custom animations */
+@keyframes pulse {
+	0%,
+	100% {
+		opacity: 0.2;
+	}
+	50% {
+		opacity: 0.3;
+	}
+}
+
+@keyframes slide-up {
+	from {
+		transform: translateY(100%);
+		opacity: 0;
+	}
+	to {
+		transform: translateY(0);
+		opacity: 1;
+	}
+}
+
+@keyframes fade-in-up {
+	from {
+		opacity: 0;
+		transform: translateY(20px);
+	}
+	to {
+		opacity: 1;
+		transform: translateY(0);
+	}
+}
+
+@keyframes pulse-slow {
+	0%,
+	100% {
+		opacity: 0.4;
+	}
+	50% {
+		opacity: 0.8;
+	}
+}
+
+.animation-delay-2000 {
+	animation-delay: 2s;
+}
+
+.animation-delay-4000 {
+	animation-delay: 4s;
+}
+
+.animate-slide-up {
+	animation: slide-up 0.3s ease-out;
+}
+
+.animate-fade-in-up {
+	animation: fade-in-up 0.6s ease-out forwards;
+}
+
+.animate-pulse-slow {
+	animation: pulse-slow 3s ease-in-out infinite;
+}
+
+/* Onboarding animations with delays */
+.animate-fade-in-delayed-1 {
+	opacity: 0;
+	animation: fade-in-up 0.6s ease-out 0.2s forwards;
+}
+
+.animate-fade-in-delayed-2 {
+	opacity: 0;
+	animation: fade-in-up 0.6s ease-out 0.6s forwards;
+}
+
+.animate-fade-in-delayed-3 {
+	opacity: 0;
+	animation: fade-in-up 0.6s ease-out 1s forwards;
+}
+
+.animate-fade-in-delayed-button {
+	opacity: 0;
+	animation: fade-in-up 0.4s ease-out 0.1s forwards;
+}
+
+/* Smooth scrolling */
+html {
+	scroll-behavior: smooth;
+}
+
+/* Custom scrollbar */
+::-webkit-scrollbar {
+	width: 8px;
+	height: 8px;
+}
+
+::-webkit-scrollbar-track {
+	background: #f1f1f1;
+}
+
+::-webkit-scrollbar-thumb {
+	background: #888;
+	border-radius: 4px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+	background: #555;
+}
+
+/* Mobile optimizations */
+@media (max-width: 768px) {
+	/* Remove hover effects on mobile */
+	* {
+		-webkit-tap-highlight-color: transparent;
+	}
+
+	/* Improve touch targets */
+	button,
+	a {
+		min-height: 44px;
+		min-width: 44px;
+	}
+}
+
+/* Safe area insets for notched devices */
+@supports (padding: max(0px)) {
+	body {
+		padding-left: max(0px, env(safe-area-inset-left));
+		padding-right: max(0px, env(safe-area-inset-right));
+	}
+}
+
+/* Prevent text size adjustment on orientation change (iOS) */
+html {
+	-webkit-text-size-adjust: 100%;
+}
+
+/* Improve font rendering */
+body {
+	-webkit-font-smoothing: antialiased;
+	-moz-osx-font-smoothing: grayscale;
+}
+
+/* Prevent rubber band scrolling on iOS */
+html,
+body {
+	overscroll-behavior-y: none;
+}

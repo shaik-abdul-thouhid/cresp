@@ -1,0 +1,365 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+    provider = "prisma-client-js"
+}
+
+datasource db {
+    provider = "postgresql"
+    url      = env("DATABASE_URL")
+}
+
+// ============================================
+// 1. USER PROFILE (no auth fields)
+// ============================================
+model User {
+    id                  String   @id @default(cuid())
+    email               String   @unique
+    username            String   @unique
+    name                String?
+    image               String?
+    bio                 String?
+    location            String?
+    onboardingCompleted Boolean  @default(false) @map("onboarding_completed")
+    createdAt           DateTime @default(now()) @map("created_at")
+    updatedAt           DateTime @updatedAt @map("updated_at")
+
+    // Relations
+    authAccount             AuthAccount?
+    emailVerificationTokens EmailVerificationToken[]
+    passwordResetTokens     PasswordResetToken[]
+    userRoles               UserRole[]
+    professionalRoles       UserProfessionalRole[]
+    activityLogs            ActivityLog[]
+
+    // Referral system relations
+    referralCode ReferralCode?
+    referredBy   Referral?     @relation("ReferredUser")
+    referrals    Referral[]    @relation("ReferrerUser")
+
+    @@index([email])
+    @@index([username])
+    @@map("users")
+}
+
+// ============================================
+// 2. AUTHENTICATION (separate from User)
+// ============================================
+model AuthAccount {
+    userId       String    @id @map("user_id")
+    passwordHash String    @map("password_hash")
+    isVerified   Boolean   @default(false) @map("is_verified")
+    lastLoginAt  DateTime? @map("last_login_at")
+    createdAt    DateTime  @default(now()) @map("created_at")
+    updatedAt    DateTime  @updatedAt @map("updated_at")
+
+    user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+    @@map("auth_accounts")
+}
+
+model EmailVerificationToken {
+    id         String    @id @default(cuid())
+    userId     String    @map("user_id")
+    token      String    @unique
+    expiresAt  DateTime  @map("expires_at")
+    consumedAt DateTime? @map("consumed_at")
+    createdAt  DateTime  @default(now()) @map("created_at")
+
+    user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+    @@index([userId])
+    @@index([token])
+    @@index([expiresAt])
+    @@map("email_verification_tokens")
+}
+
+model PasswordResetToken {
+    id         String    @id @default(cuid())
+    userId     String    @map("user_id")
+    token      String    @unique
+    expiresAt  DateTime  @map("expires_at")
+    consumedAt DateTime? @map("consumed_at")
+    createdAt  DateTime  @default(now()) @map("created_at")
+
+    user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+    @@index([userId])
+    @@index([token])
+    @@index([expiresAt])
+    @@map("password_reset_tokens")
+}
+
+// ============================================
+// 3. ROLES
+// ============================================
+model Role {
+    id          String   @id @default(cuid())
+    key         String   @unique
+    name        String
+    description String?
+    priority    Int      @default(0) @map("priority") // Hierarchy: 0=guest, 10=member, 20=moderator, 30=admin
+    createdAt   DateTime @default(now()) @map("created_at")
+    updatedAt   DateTime @updatedAt @map("updated_at")
+
+    userRoles UserRole[]
+
+    @@index([key])
+    @@index([priority])
+    @@map("roles")
+}
+
+model UserRole {
+    userId     String   @map("user_id")
+    roleId     String   @map("role_id")
+    assignedAt DateTime @default(now()) @map("assigned_at")
+
+    user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+    role Role @relation(fields: [roleId], references: [id], onDelete: Cascade)
+
+    @@id([userId, roleId])
+    @@index([roleId])
+    @@index([userId])
+    @@map("user_roles")
+}
+
+// ============================================
+// 4. ACTION CATALOG (every possible action)
+// ============================================
+model Action {
+    id              String   @id @default(cuid())
+    key             String   @unique
+    resource        String?
+    description     String?
+    minRolePriority Int?     @map("min_role_priority") // Minimum role priority (null = no requirement)
+    constraints     Json? // Flexible constraints (level, credits, rate limits, etc.)
+    createdAt       DateTime @default(now()) @map("created_at")
+    updatedAt       DateTime @updatedAt @map("updated_at")
+
+    authorizations Authorization[]
+
+    @@index([key])
+    @@index([resource])
+    @@index([minRolePriority])
+    @@map("actions")
+}
+
+// ============================================
+// 5. AUTHORIZATION MAPPING (subject → action)
+// ============================================
+enum SubjectType {
+    USER
+    ROLE
+}
+
+enum AuthzEffect {
+    ALLOW
+    DENY
+}
+
+model Authorization {
+    id          String      @id @default(cuid())
+    subjectType SubjectType @map("subject_type")
+    subjectId   String      @map("subject_id")
+    actionId    String      @map("action_id")
+    effect      AuthzEffect
+    createdAt   DateTime    @default(now()) @map("created_at")
+
+    action Action @relation(fields: [actionId], references: [id], onDelete: Cascade)
+
+    @@unique([subjectType, subjectId, actionId])
+    @@index([actionId])
+    @@index([subjectType, subjectId])
+    @@map("authorizations")
+}
+
+// ============================================
+// 6. PROFESSIONAL/CREATIVE ROLES
+// ============================================
+model ProfessionalRole {
+    id           String   @id @default(cuid())
+    key          String   @unique
+    name         String
+    description  String?
+    icon         String?
+    category     String?
+    displayOrder Int      @default(0) @map("display_order")
+    isActive     Boolean  @default(true) @map("is_active")
+    createdAt    DateTime @default(now()) @map("created_at")
+    updatedAt    DateTime @updatedAt @map("updated_at")
+
+    userProfessionalRoles UserProfessionalRole[]
+
+    @@index([category])
+    @@index([isActive])
+    @@index([key])
+    @@map("professional_roles")
+}
+
+model UserProfessionalRole {
+    userId             String   @map("user_id")
+    professionalRoleId String   @map("professional_role_id")
+    isPrimary          Boolean  @default(false) @map("is_primary")
+    yearsExperience    Int?     @map("years_experience")
+    assignedAt         DateTime @default(now()) @map("assigned_at")
+
+    user             User             @relation(fields: [userId], references: [id], onDelete: Cascade)
+    professionalRole ProfessionalRole @relation(fields: [professionalRoleId], references: [id], onDelete: Cascade)
+
+    @@id([userId, professionalRoleId])
+    @@index([userId])
+    @@index([professionalRoleId])
+    @@map("user_professional_roles")
+}
+
+// ============================================
+// 7. ACTIVITY/AUDIT LOGGING
+// ============================================
+model ActivityLog {
+    id String @id @default(cuid())
+
+    // Who performed the action
+    userId    String? @map("user_id") // null for system/anonymous actions
+    ipAddress String? @map("ip_address")
+    userAgent String? @map("user_agent")
+
+    // What action was performed
+    action         String // "user.login", "post.create", "profile.update"
+    actionCategory String @map("action_category") // "auth", "content", "profile"
+
+    // What was affected
+    resourceType String? @map("resource_type") // "Post", "User", "Comment"
+    resourceId   String? @map("resource_id")
+
+    // Details
+    method   String? // "POST", "PUT", "DELETE"
+    endpoint String? // "/api/posts/123"
+    status   String  @default("success") // "success", "failure", "pending"
+
+    // Changes (for update actions)
+    changesBefore Json? @map("changes_before") // old values
+    changesAfter  Json? @map("changes_after") // new values
+
+    // Additional context
+    metadata     Json? // any additional data
+    errorMessage String? @map("error_message")
+    duration     Int? // request duration in ms
+
+    createdAt DateTime @default(now()) @map("created_at")
+
+    user User? @relation(fields: [userId], references: [id], onDelete: SetNull)
+
+    @@index([userId])
+    @@index([action])
+    @@index([actionCategory])
+    @@index([resourceType, resourceId])
+    @@index([createdAt])
+    @@index([status])
+    @@map("activity_logs")
+}
+
+// ============================================
+// 8. REFERRAL TRACKING SYSTEM
+// ============================================
+
+// Each user gets one referral code for sharing
+model ReferralCode {
+    id     String @id @default(cuid())
+    userId String @unique @map("user_id")
+    code   String @unique // e.g., "JOHN_AB12CD" or custom slug
+
+    // Basic counters (denormalized for quick access)
+    totalClicks      Int @default(0) @map("total_clicks")
+    totalSignups     Int @default(0) @map("total_signups")
+    totalConversions Int @default(0) @map("total_conversions") // Signups that completed onboarding
+
+    // Metadata
+    isActive  Boolean  @default(true) @map("is_active")
+    createdAt DateTime @default(now()) @map("created_at")
+    updatedAt DateTime @updatedAt @map("updated_at")
+
+    user      User            @relation(fields: [userId], references: [id], onDelete: Cascade)
+    clicks    ReferralClick[]
+    referrals Referral[]
+
+    @@index([code])
+    @@index([userId])
+    @@index([isActive])
+    @@map("referral_codes")
+}
+
+// Track every click on a referral link (pre-signup)
+model ReferralClick {
+    id             String @id @default(cuid())
+    referralCodeId String @map("referral_code_id")
+
+    // Anonymous visitor tracking (before they sign up)
+    ipAddress   String? @map("ip_address")
+    userAgent   String? @map("user_agent")
+    referrerUrl String? @map("referrer_url") // Where they came from (e.g., Twitter, Email)
+    landingPage String? @map("landing_page") // Where they landed on Cresp
+
+    // Conversion tracking
+    convertedToSignup Boolean   @default(false) @map("converted_to_signup")
+    convertedUserId   String?   @map("converted_user_id") // Set when they signup
+    convertedAt       DateTime? @map("converted_at")
+
+    // Timestamps
+    clickedAt DateTime @default(now()) @map("clicked_at")
+
+    referralCode ReferralCode @relation(fields: [referralCodeId], references: [id], onDelete: Cascade)
+
+    @@index([referralCodeId])
+    @@index([ipAddress])
+    @@index([convertedUserId])
+    @@index([clickedAt])
+    @@index([convertedToSignup])
+    @@map("referral_clicks")
+}
+
+// Track successful referrals (post-signup)
+model Referral {
+    id             String @id @default(cuid())
+    referralCodeId String @map("referral_code_id")
+
+    // Who referred (the inviter)
+    referrerId String @map("referrer_id")
+
+    // Who was referred (the invitee)
+    referredId String @unique @map("referred_id")
+
+    // Conversion funnel tracking
+    status ReferralStatus @default(SIGNED_UP)
+
+    // Milestone timestamps (track user journey)
+    signedUpAt           DateTime  @default(now()) @map("signed_up_at")
+    emailVerifiedAt      DateTime? @map("email_verified_at")
+    profileCompletedAt   DateTime? @map("profile_completed_at")
+    firstPostAt          DateTime? @map("first_post_at")
+    firstCollaborationAt DateTime? @map("first_collaboration_at")
+
+    // Flexible metadata for future extensions
+    metadata Json? // Store any additional tracking data
+
+    referrer     User         @relation("ReferrerUser", fields: [referrerId], references: [id], onDelete: Cascade)
+    referred     User         @relation("ReferredUser", fields: [referredId], references: [id], onDelete: Cascade)
+    referralCode ReferralCode @relation(fields: [referralCodeId], references: [id], onDelete: Cascade)
+
+    @@index([referrerId])
+    @@index([referredId])
+    @@index([referralCodeId])
+    @@index([status])
+    @@index([signedUpAt])
+    @@map("referrals")
+}
+
+// Referral conversion stages (for funnel analysis)
+enum ReferralStatus {
+    SIGNED_UP // Just created account
+    EMAIL_VERIFIED // Verified their email
+    PROFILE_COMPLETED // Finished onboarding/journey
+    FIRST_POST // Created first content (future)
+    FIRST_COLLABORATION // Engaged in first collab (future)
+    ACTIVE_USER // Regular activity, e.g., 7+ days (future)
+}
