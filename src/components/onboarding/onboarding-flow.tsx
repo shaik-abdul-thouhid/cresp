@@ -163,91 +163,87 @@ export function OnboardingFlow({
 
 					{/* User Type Selection */}
 					<div className="grid w-full max-w-2xl animate-fade-in-delayed-3 gap-4 sm:grid-cols-2">
-						{/* Visitor Option */}
-						<button
-							type="button"
-							onClick={() => handleUserTypeSelect("visitor")}
-							className={`group relative overflow-hidden rounded-2xl border-2 p-8 text-left transition-all duration-300 ${
-								userType === "visitor"
-									? "border-indigo-500 bg-indigo-500/20 shadow-indigo-500/30 shadow-md"
-									: "border-white/20 bg-white/5 hover:scale-[1.01] hover:border-white/40 hover:bg-white/10"
-							}`}
-						>
-							<div className="relative z-10">
-								<div className="mb-4 flex items-center gap-3">
-									<div
-										className={`rounded-full p-3 transition-colors ${
-											userType === "visitor" ? "bg-indigo-500" : "bg-white/10"
-										}`}
-									>
-										<TrendingUp
-											className={`h-6 w-6 ${
-												userType === "visitor"
-													? "text-white"
-													: "text-indigo-300"
-											}`}
-										/>
+						{[
+							{
+								type: "visitor" as UserType,
+								icon: TrendingUp,
+								title: "Explore",
+								description:
+									"Browse amazing work from creative professionals and get inspired",
+								borderColor: "border-indigo-500",
+								bgColor: "bg-indigo-500/20",
+								shadowColor: "shadow-indigo-500/30",
+								iconBg: "bg-indigo-500",
+								iconColor: "text-indigo-300",
+								gradientFrom: "from-indigo-500/20",
+							},
+							{
+								type: "creator" as UserType,
+								icon: Sparkles,
+								title: "Create & Collaborate",
+								description:
+									"Showcase your work, connect with others, and find collaboration opportunities",
+								borderColor: "border-purple-500",
+								bgColor: "bg-purple-500/20",
+								shadowColor: "shadow-purple-500/30",
+								iconBg: "bg-purple-500",
+								iconColor: "text-purple-300",
+								gradientFrom: "from-purple-500/20",
+								showSparkles: true,
+							},
+						].map((option) => {
+							const Icon = option.icon;
+							const isSelected = userType === option.type;
+							return (
+								<button
+									key={option.type}
+									type="button"
+									onClick={() => handleUserTypeSelect(option.type)}
+									className={`group relative overflow-hidden rounded-2xl border-2 p-8 text-left transition-all duration-300 ${
+										isSelected
+											? `${option.borderColor} ${option.bgColor} shadow-md ${option.shadowColor}`
+											: "border-white/20 bg-white/5 hover:scale-[1.01] hover:border-white/40 hover:bg-white/10"
+									}`}
+								>
+									<div className="relative z-10">
+										<div className="mb-4 flex items-center gap-3">
+											<div
+												className={`rounded-full p-3 transition-colors ${
+													isSelected ? option.iconBg : "bg-white/10"
+												}`}
+											>
+												<Icon
+													className={`h-6 w-6 ${
+														isSelected ? "text-white" : option.iconColor
+													}`}
+												/>
+											</div>
+											<h3 className="font-semibold text-2xl text-white">
+												{option.title}
+											</h3>
+										</div>
+										<p className="text-gray-300 text-sm">
+											{option.description}
+										</p>
 									</div>
-									<h3 className="font-semibold text-2xl text-white">Explore</h3>
-								</div>
-								<p className="text-gray-300 text-sm">
-									Browse amazing work from creative professionals and get
-									inspired
-								</p>
-							</div>
 
-							{/* Animated background effect */}
-							{userType === "visitor" && (
-								<div className="absolute inset-0 bg-gradient-to-br from-indigo-500/20 to-transparent opacity-50" />
-							)}
-						</button>
-
-						{/* Creator Option */}
-						<button
-							type="button"
-							onClick={() => handleUserTypeSelect("creator")}
-							className={`group relative overflow-hidden rounded-2xl border-2 p-8 text-left transition-all duration-300 ${
-								userType === "creator"
-									? "border-purple-500 bg-purple-500/20 shadow-md shadow-purple-500/30"
-									: "border-white/20 bg-white/5 hover:scale-[1.01] hover:border-white/40 hover:bg-white/10"
-							}`}
-						>
-							<div className="relative z-10">
-								<div className="mb-4 flex items-center gap-3">
-									<div
-										className={`rounded-full p-3 transition-colors ${
-											userType === "creator" ? "bg-purple-500" : "bg-white/10"
-										}`}
-									>
-										<Sparkles
-											className={`h-6 w-6 ${
-												userType === "creator"
-													? "text-white"
-													: "text-purple-300"
-											}`}
-										/>
-									</div>
-									<h3 className="font-semibold text-2xl text-white">
-										Create & Collaborate
-									</h3>
-								</div>
-								<p className="text-gray-300 text-sm">
-									Showcase your work, connect with others, and find
-									collaboration opportunities
-								</p>
-							</div>
-
-							{/* Animated background effect with sparkles */}
-							{userType === "creator" && (
-								<>
-									<div className="absolute inset-0 bg-gradient-to-br from-purple-500/20 to-transparent opacity-50" />
-									<div className="absolute inset-0 overflow-hidden">
-										<div className="-right-4 -top-4 absolute h-20 w-20 animate-pulse-slow rounded-full bg-purple-400/20 blur-2xl" />
-										<div className="-bottom-4 -left-4 absolute h-20 w-20 animate-pulse-slow rounded-full bg-pink-400/20 blur-2xl [animation-delay:500ms]" />
-									</div>
-								</>
-							)}
-						</button>
+									{/* Animated background effect */}
+									{isSelected && (
+										<>
+											<div
+												className={`absolute inset-0 bg-gradient-to-br ${option.gradientFrom} to-transparent opacity-50`}
+											/>
+											{option.showSparkles && (
+												<div className="absolute inset-0 overflow-hidden">
+													<div className="-right-4 -top-4 absolute h-20 w-20 animate-pulse-slow rounded-full bg-purple-400/20 blur-2xl" />
+													<div className="-bottom-4 -left-4 absolute h-20 w-20 animate-pulse-slow rounded-full bg-pink-400/20 blur-2xl [animation-delay:500ms]" />
+												</div>
+											)}
+										</>
+									)}
+								</button>
+							);
+						})}
 					</div>
 
 					{/* Continue Button */}
@@ -421,65 +417,76 @@ export function OnboardingFlow({
 							</div>
 						</div>
 
-						{/* Name Input */}
-						<div>
-							<label
-								htmlFor="name"
-								className="mb-2 block font-medium text-gray-200 text-sm"
-							>
-								Display Name (Optional)
-							</label>
-							<input
-								type="text"
-								id="name"
-								value={name}
-								onChange={(e) => setName(e.target.value)}
-								placeholder={`Or we'll use ${username}`}
-								maxLength={100}
-								className="w-full rounded-lg border border-white/20 bg-white/10 px-4 py-3 text-white placeholder-gray-400 focus:border-purple-500 focus:outline-none focus:ring-2 focus:ring-purple-500"
-							/>
-						</div>
-
-						{/* Bio Input */}
-						<div>
-							<label
-								htmlFor="bio"
-								className="mb-2 block font-medium text-gray-200 text-sm"
-							>
-								Bio (Optional)
-							</label>
-							<textarea
-								id="bio"
-								value={bio}
-								onChange={(e) => setBio(e.target.value)}
-								placeholder="Tell us about yourself and your creative journey..."
-								maxLength={500}
-								rows={4}
-								className="w-full resize-none rounded-lg border border-white/20 bg-white/10 px-4 py-3 text-white placeholder-gray-400 focus:border-purple-500 focus:outline-none focus:ring-2 focus:ring-purple-500"
-							/>
-							<p className="mt-1 text-right text-gray-400 text-xs">
-								{bio.length}/500
-							</p>
-						</div>
-
-						{/* Location Input */}
-						<div>
-							<label
-								htmlFor="location"
-								className="mb-2 block font-medium text-gray-200 text-sm"
-							>
-								Location (Optional)
-							</label>
-							<input
-								type="text"
-								id="location"
-								value={location}
-								onChange={(e) => setLocation(e.target.value)}
-								placeholder="City, Country"
-								maxLength={100}
-								className="w-full rounded-lg border border-white/20 bg-white/10 px-4 py-3 text-white placeholder-gray-400 focus:border-purple-500 focus:outline-none focus:ring-2 focus:ring-purple-500"
-							/>
-						</div>
+						{/* Profile Input Fields */}
+						{[
+							{
+								id: "name",
+								label: "Display Name (Optional)",
+								type: "text" as const,
+								value: name,
+								onChange: setName,
+								placeholder: `Or we'll use ${username}`,
+								maxLength: 100,
+							},
+							{
+								id: "bio",
+								label: "Bio (Optional)",
+								type: "textarea" as const,
+								value: bio,
+								onChange: setBio,
+								placeholder:
+									"Tell us about yourself and your creative journey...",
+								maxLength: 500,
+								rows: 4,
+								showCounter: true,
+							},
+							{
+								id: "location",
+								label: "Location (Optional)",
+								type: "text" as const,
+								value: location,
+								onChange: setLocation,
+								placeholder: "City, Country",
+								maxLength: 100,
+							},
+						].map((field) => (
+							<div key={field.id}>
+								<label
+									htmlFor={field.id}
+									className="mb-2 block font-medium text-gray-200 text-sm"
+								>
+									{field.label}
+								</label>
+								{field.type === "textarea" ? (
+									<>
+										<textarea
+											id={field.id}
+											value={field.value}
+											onChange={(e) => field.onChange(e.target.value)}
+											placeholder={field.placeholder}
+											maxLength={field.maxLength}
+											rows={field.rows}
+											className="w-full resize-none rounded-lg border border-white/20 bg-white/10 px-4 py-3 text-white placeholder-gray-400 focus:border-purple-500 focus:outline-none focus:ring-2 focus:ring-purple-500"
+										/>
+										{field.showCounter && (
+											<p className="mt-1 text-right text-gray-400 text-xs">
+												{field.value.length}/{field.maxLength}
+											</p>
+										)}
+									</>
+								) : (
+									<input
+										type={field.type}
+										id={field.id}
+										value={field.value}
+										onChange={(e) => field.onChange(e.target.value)}
+										placeholder={field.placeholder}
+										maxLength={field.maxLength}
+										className="w-full rounded-lg border border-white/20 bg-white/10 px-4 py-3 text-white placeholder-gray-400 focus:border-purple-500 focus:outline-none focus:ring-2 focus:ring-purple-500"
+									/>
+								)}
+							</div>
+						))}
 
 						{/* Submit Button */}
 						<div className="flex justify-center pt-4">

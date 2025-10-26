@@ -1,4 +1,9 @@
-import { NextResponse } from "next/server";
+import {
+	errorResponse,
+	extractRequestMetadata,
+	successResponse,
+	validationErrorResponse,
+} from "~/lib/api/utils";
 import { generateResetPasswordToken } from "~/lib/auth/jwt";
 import { forgotPasswordSchema } from "~/lib/auth/validation";
 import { sendPasswordResetEmail } from "~/lib/email/sendgrid";
@@ -12,13 +17,7 @@ export async function POST(request: Request) {
 		// Validate input
 		const validation = forgotPasswordSchema.safeParse(body);
 		if (!validation.success) {
-			return NextResponse.json(
-				{
-					error:
-						validation.error.errors[0]?.message || "Invalid input",
-				},
-				{ status: 400 }
-			);
+			return validationErrorResponse(validation.error);
 		}
 
 		const { email } = validation.data;
@@ -48,6 +47,7 @@ export async function POST(request: Request) {
 
 			// Log password reset request
 			try {
+				const requestMetadata = extractRequestMetadata(request);
 				await logActivity({
 					userId: user.id,
 					action: ActivityActions.AUTH_PASSWORD_RESET_REQUEST,
@@ -55,14 +55,7 @@ export async function POST(request: Request) {
 					request: {
 						method: "POST",
 						endpoint: "/api/auth/forgot-password",
-						ipAddress:
-							request.headers
-								.get("x-forwarded-for")
-								?.split(",")[0] ||
-							request.headers.get("x-real-ip") ||
-							undefined,
-						userAgent:
-							request.headers.get("user-agent") || undefined,
+						...requestMetadata,
 					},
 					metadata: {
 						email,
@@ -74,7 +67,7 @@ export async function POST(request: Request) {
 			}
 		}
 
-		return NextResponse.json({
+		return successResponse({
 			message:
 				"If an account exists with that email, you will receive a password reset link.",
 		});
@@ -87,9 +80,6 @@ export async function POST(request: Request) {
 			request,
 		});
 
-		return NextResponse.json(
-			{ error: "Something went wrong. Please try again." },
-			{ status: 500 }
-		);
+		return errorResponse("Something went wrong. Please try again.");
 	}
 }

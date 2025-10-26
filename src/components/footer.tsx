@@ -1,5 +1,10 @@
 import Link from "next/link";
 
+const FOOTER_LINKS = [
+	{ href: "/terms", label: "Terms of Service" },
+	{ href: "/privacy-policy", label: "Privacy Policy" },
+] as const;
+
 export function Footer() {
 	return (
 		<footer className="border-gray-200 border-t bg-white py-6">
@@ -12,18 +17,15 @@ export function Footer() {
 
 					{/* Links */}
 					<div className="flex gap-6 text-sm">
-						<Link
-							href="/terms"
-							className="text-gray-600 transition-colors hover:text-gray-900"
-						>
-							Terms of Service
-						</Link>
-						<Link
-							href="/privacy-policy"
-							className="text-gray-600 transition-colors hover:text-gray-900"
-						>
-							Privacy Policy
-						</Link>
+						{FOOTER_LINKS.map((link) => (
+							<Link
+								key={link.href}
+								href={link.href}
+								className="text-gray-600 transition-colors hover:text-gray-900"
+							>
+								{link.label}
+							</Link>
+						))}
 					</div>
 
 					{/* Prototype Notice */}

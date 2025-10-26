@@ -1,5 +1,10 @@
 import { cookies } from "next/headers";
 import { NextResponse } from "next/server";
+import {
+	errorResponse,
+	extractRequestMetadata,
+	validationErrorResponse,
+} from "~/lib/api/utils";
 import { generateToken, generateVerificationToken } from "~/lib/auth/jwt";
 import { verifyPassword } from "~/lib/auth/password";
 import { loginSchema } from "~/lib/auth/validation";
@@ -18,13 +23,7 @@ export async function POST(request: Request) {
 		// Validate input
 		const validation = loginSchema.safeParse(body);
 		if (!validation.success) {
-			return NextResponse.json(
-				{
-					error:
-						validation.error.errors[0]?.message || "Invalid input",
-				},
-				{ status: 400 }
-			);
+			return validationErrorResponse(validation.error);
 		}
 
 		const { email, password } = validation.data;
@@ -41,10 +40,7 @@ export async function POST(request: Request) {
 		});
 
 		if (!user || !user.authAccount) {
-			return NextResponse.json(
-				{ error: "Invalid email/username or password" },
-				{ status: 401 }
-			);
+			return errorResponse("Invalid email/username or password", 401);
 		}
 
 		// Verify password
@@ -53,10 +49,7 @@ export async function POST(request: Request) {
 			user.authAccount.passwordHash
 		);
 		if (!isValidPassword) {
-			return NextResponse.json(
-				{ error: "Invalid email/username or password" },
-				{ status: 401 }
-			);
+			return errorResponse("Invalid email/username or password", 401);
 		}
 
 		// Check if email is verified
@@ -75,6 +68,7 @@ export async function POST(request: Request) {
 
 			// Log verification email request
 			try {
+				const requestMetadata = extractRequestMetadata(request);
 				await logActivity({
 					userId: user.id,
 					action: ActivityActions.AUTH_VERIFICATION_EMAIL_REQUESTED,
@@ -82,14 +76,7 @@ export async function POST(request: Request) {
 					request: {
 						method: "POST",
 						endpoint: "/api/auth/login",
-						ipAddress:
-							request.headers
-								.get("x-forwarded-for")
-								?.split(",")[0] ||
-							request.headers.get("x-real-ip") ||
-							undefined,
-						userAgent:
-							request.headers.get("user-agent") || undefined,
+						...requestMetadata,
 					},
 					metadata: {
 						reason: "unverified_email_login_attempt",
@@ -160,9 +147,6 @@ export async function POST(request: Request) {
 			request,
 		});
 
-		return NextResponse.json(
-			{ error: "Something went wrong. Please try again." },
-			{ status: 500 }
-		);
+		return errorResponse("Something went wrong. Please try again.");
 	}
 }

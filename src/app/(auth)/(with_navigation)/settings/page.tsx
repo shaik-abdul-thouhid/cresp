@@ -34,32 +34,25 @@ export default async function SettingsPage() {
 					Profile Information
 				</h2>
 				<div className="space-y-4">
-					<div>
-						<div className="mb-1 block font-medium text-gray-700 text-sm">
-							Name
+					{[
+						{ label: "Name", value: fullUser.name ?? "Not set" },
+						{ label: "Username", value: `@${fullUser.username}` },
+						{ label: "Email", value: fullUser.email },
+						{ label: "Bio", value: fullUser.bio ?? "No bio added yet" },
+					].map((field) => (
+						<div key={field.label}>
+							<div className="mb-1 block font-medium text-gray-700 text-sm">
+								{field.label}
+							</div>
+							<p
+								className={
+									field.label === "Bio" ? "text-gray-600" : "text-gray-900"
+								}
+							>
+								{field.value}
+							</p>
 						</div>
-						<p className="text-gray-900">{fullUser.name ?? "Not set"}</p>
-					</div>
-					<div>
-						<div className="mb-1 block font-medium text-gray-700 text-sm">
-							Username
-						</div>
-						<p className="text-gray-900">@{fullUser.username}</p>
-					</div>
-					<div>
-						<div className="mb-1 block font-medium text-gray-700 text-sm">
-							Email
-						</div>
-						<p className="text-gray-900">{fullUser.email}</p>
-					</div>
-					<div>
-						<div className="mb-1 block font-medium text-gray-700 text-sm">
-							Bio
-						</div>
-						<p className="text-gray-600">
-							{fullUser.bio ?? "No bio added yet"}
-						</p>
-					</div>
+					))}
 				</div>
 				<div className="mt-6">
 					<button
@@ -77,18 +70,23 @@ export default async function SettingsPage() {
 					Account Settings
 				</h2>
 				<div className="space-y-4">
-					<div>
-						<h3 className="mb-2 font-medium text-gray-900">Privacy</h3>
-						<p className="text-gray-600 text-sm">
-							Control who can see your profile and posts
-						</p>
-					</div>
-					<div>
-						<h3 className="mb-2 font-medium text-gray-900">Notifications</h3>
-						<p className="text-gray-600 text-sm">
-							Manage your notification preferences
-						</p>
-					</div>
+					{[
+						{
+							title: "Privacy",
+							description: "Control who can see your profile and posts",
+						},
+						{
+							title: "Notifications",
+							description: "Manage your notification preferences",
+						},
+					].map((setting) => (
+						<div key={setting.title}>
+							<h3 className="mb-2 font-medium text-gray-900">
+								{setting.title}
+							</h3>
+							<p className="text-gray-600 text-sm">{setting.description}</p>
+						</div>
+					))}
 				</div>
 			</div>
 

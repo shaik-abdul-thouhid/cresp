@@ -10,6 +10,13 @@ interface NavigationUser {
 	image?: string | null;
 }
 
+const NAV_LINKS = [
+	{ href: "/feed", icon: "🏠", label: "Feed" },
+	{ href: "/discover", icon: "🔍", label: "Discover" },
+	{ href: "/collaborations", icon: "🤝", label: "Collaborations" },
+	{ href: "/messages", icon: "💬", label: "Messages" },
+] as const;
+
 export function Navigation({ user }: { user: NavigationUser }) {
 	return (
 		<nav className="border-gray-200 border-b bg-white shadow-sm">
@@ -30,18 +37,11 @@ export function Navigation({ user }: { user: NavigationUser }) {
 
 						{/* Main Navigation Links */}
 						<div className="hidden space-x-4 md:flex">
-							<NavLink href="/feed" icon="🏠">
-								Feed
-							</NavLink>
-							<NavLink href="/discover" icon="🔍">
-								Discover
-							</NavLink>
-							<NavLink href="/collaborations" icon="🤝">
-								Collaborations
-							</NavLink>
-							<NavLink href="/messages" icon="💬">
-								Messages
-							</NavLink>
+							{NAV_LINKS.map((link) => (
+								<NavLink key={link.href} href={link.href} icon={link.icon}>
+									{link.label}
+								</NavLink>
+							))}
 						</div>
 					</div>
 
@@ -66,10 +66,9 @@ export function Navigation({ user }: { user: NavigationUser }) {
 			{/* Mobile Navigation */}
 			<div className="safe-area-bottom fixed right-0 bottom-0 left-0 z-40 border-gray-200 border-t bg-white shadow-lg md:hidden">
 				<div className="flex justify-around py-2">
-					<MobileNavLink href="/feed" icon="🏠" />
-					<MobileNavLink href="/discover" icon="🔍" />
-					<MobileNavLink href="/collaborations" icon="🤝" />
-					<MobileNavLink href="/messages" icon="💬" />
+					{NAV_LINKS.map((link) => (
+						<MobileNavLink key={link.href} href={link.href} icon={link.icon} />
+					))}
 				</div>
 			</div>
 		</nav>

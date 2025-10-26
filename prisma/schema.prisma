@@ -1,5 +1,6 @@
-// This is your Prisma schema file,
-// learn more about it in the docs: https://pris.ly/d/prisma-schema
+// ============================================
+// PRISMA SCHEMA - CRESP PLATFORM
+// ============================================
 
 generator client {
     provider = "prisma-client-js"
@@ -11,40 +12,169 @@ datasource db {
 }
 
 // ============================================
-// 1. USER PROFILE (no auth fields)
+// ENUMS
+// ============================================
+
+// User & Auth
+enum AccountStatus {
+    ACTIVE
+    FROZEN_AI_VIOLATIONS
+    FROZEN_SPAM
+    UNDER_REVIEW
+    SUSPENDED
+}
+
+// Authorization
+enum SubjectType {
+    USER
+    ROLE
+}
+
+enum AuthzEffect {
+    ALLOW
+    DENY
+}
+
+// Referrals
+enum ReferralStatus {
+    SIGNED_UP
+    EMAIL_VERIFIED
+    PROFILE_COMPLETED
+    FIRST_POST
+    FIRST_COLLABORATION
+    ACTIVE_USER
+}
+
+// Posts
+enum PostType {
+    CASUAL
+    PORTFOLIO
+}
+
+enum PostStatus {
+    DRAFT
+    SCHEDULED
+    PUBLISHED
+    UNDER_REVIEW
+    REJECTED
+    ARCHIVED
+}
+
+enum PostVisibility {
+    PUBLIC
+    CONNECTIONS_ONLY
+    PRIVATE
+}
+
+enum MediaType {
+    IMAGE
+    VIDEO_LINK
+    VIDEO_HOSTED
+    DOCUMENT
+    AUDIO_LINK
+    AUDIO_HOSTED
+}
+
+// Moderation (only fixed workflow states, categories are in a table)
+enum ModerationStatus {
+    PENDING
+    IN_REVIEW
+    RESOLVED_VALID // Report was valid, action taken
+    RESOLVED_INVALID // Report was invalid/false flag
+    RESOLVED_WARNING_SENT // User warned but no action
+    DISMISSED
+}
+
+enum ModerationPriority {
+    LOW
+    NORMAL
+    HIGH
+    URGENT
+}
+
+// Privacy
+enum VisibilityLevel {
+    EVERYONE
+    CONNECTIONS
+    NOBODY
+}
+
+// Achievements
+enum AchievementCategory {
+    MANUAL // Check only on profile view
+    POST_COUNT // Check after post created
+    LIKES // Check after post liked
+    ENGAGEMENT // Check after comment/share
+    STREAK // Check via scheduled job (future)
+}
+
+// ============================================
+// 1. USER & PROFILE
 // ============================================
 model User {
-    id                  String   @id @default(cuid())
-    email               String   @unique
-    username            String   @unique
+    id                  String  @id @default(cuid())
+    email               String  @unique
+    username            String  @unique
     name                String?
     image               String?
     bio                 String?
     location            String?
-    onboardingCompleted Boolean  @default(false) @map("onboarding_completed")
-    createdAt           DateTime @default(now()) @map("created_at")
-    updatedAt           DateTime @updatedAt @map("updated_at")
+    onboardingCompleted Boolean @default(false) @map("onboarding_completed")
 
-    // Relations
+    // Reputation & Engagement
+    totalReputation    Int @default(0) @map("total_reputation")
+    portfolioPostCount Int @default(0) @map("portfolio_post_count")
+    casualPostCount    Int @default(0) @map("casual_post_count")
+
+    // Anti-abuse
+    trustScore         Float         @default(1.0) @map("trust_score")
+    accountStatus      AccountStatus @default(ACTIVE) @map("account_status")
+    accountFrozenUntil DateTime?     @map("account_frozen_until")
+
+    createdAt DateTime @default(now()) @map("created_at")
+    updatedAt DateTime @updatedAt @map("updated_at")
+
+    // Existing Relations
     authAccount             AuthAccount?
     emailVerificationTokens EmailVerificationToken[]
     passwordResetTokens     PasswordResetToken[]
     userRoles               UserRole[]
     professionalRoles       UserProfessionalRole[]
     activityLogs            ActivityLog[]
+    referralCode            ReferralCode?
+    referredBy              Referral?                @relation("ReferredUser")
+    referrals               Referral[]               @relation("ReferrerUser")
+    feedback                UserFeedback[]
+    feedbackPrompts         FeedbackPromptLog[]
 
-    // Referral system relations
-    referralCode ReferralCode?
-    referredBy   Referral?     @relation("ReferredUser")
-    referrals    Referral[]    @relation("ReferrerUser")
+    // Content Relations
+    posts        Post[]
+    postLikes    PostLike[]
+    postComments PostComment[]
+    commentLikes CommentLike[]
+    collections  PortfolioCollection[]
+
+    // Achievement Relations
+    achievements     UserAchievement[]
+    achievementCheck UserAchievementCheck?
+
+    // Moderation Relations
+    moderationReports    ModerationReport[] @relation("ModerationReporter")
+    moderationQueueOwner ModerationQueue[]  @relation("PostOwner")
+    moderationReviewer   ModerationQueue[]  @relation("Moderator")
+
+    // Rate Limiting
+    rateLimit UserPostRateLimit?
 
     @@index([email])
     @@index([username])
+    @@index([totalReputation])
+    @@index([accountStatus])
     @@map("users")
 }
 
 // ============================================
-// 2. AUTHENTICATION (separate from User)
+// 2. AUTHENTICATION
 // ============================================
 model AuthAccount {
     userId       String    @id @map("user_id")
@@ -92,14 +222,14 @@ model PasswordResetToken {
 }
 
 // ============================================
-// 3. ROLES
+// 3. ROLES & AUTHORIZATION
 // ============================================
 model Role {
     id          String   @id @default(cuid())
     key         String   @unique
     name        String
     description String?
-    priority    Int      @default(0) @map("priority") // Hierarchy: 0=guest, 10=member, 20=moderator, 30=admin
+    priority    Int      @default(0)
     createdAt   DateTime @default(now()) @map("created_at")
     updatedAt   DateTime @updatedAt @map("updated_at")
 
@@ -124,16 +254,13 @@ model UserRole {
     @@map("user_roles")
 }
 
-// ============================================
-// 4. ACTION CATALOG (every possible action)
-// ============================================
 model Action {
     id              String   @id @default(cuid())
     key             String   @unique
     resource        String?
     description     String?
-    minRolePriority Int?     @map("min_role_priority") // Minimum role priority (null = no requirement)
-    constraints     Json? // Flexible constraints (level, credits, rate limits, etc.)
+    minRolePriority Int?     @map("min_role_priority")
+    constraints     Json?
     createdAt       DateTime @default(now()) @map("created_at")
     updatedAt       DateTime @updatedAt @map("updated_at")
 
@@ -143,19 +270,6 @@ model Action {
     @@index([resource])
     @@index([minRolePriority])
     @@map("actions")
-}
-
-// ============================================
-// 5. AUTHORIZATION MAPPING (subject → action)
-// ============================================
-enum SubjectType {
-    USER
-    ROLE
-}
-
-enum AuthzEffect {
-    ALLOW
-    DENY
 }
 
 model Authorization {
@@ -175,7 +289,7 @@ model Authorization {
 }
 
 // ============================================
-// 6. PROFESSIONAL/CREATIVE ROLES
+// 4. PROFESSIONAL ROLES
 // ============================================
 model ProfessionalRole {
     id           String   @id @default(cuid())
@@ -190,6 +304,7 @@ model ProfessionalRole {
     updatedAt    DateTime @updatedAt @map("updated_at")
 
     userProfessionalRoles UserProfessionalRole[]
+    postTags              PostProfessionalRole[]
 
     @@index([category])
     @@index([isActive])
@@ -198,53 +313,550 @@ model ProfessionalRole {
 }
 
 model UserProfessionalRole {
-    userId             String   @map("user_id")
-    professionalRoleId String   @map("professional_role_id")
-    isPrimary          Boolean  @default(false) @map("is_primary")
-    yearsExperience    Int?     @map("years_experience")
-    assignedAt         DateTime @default(now()) @map("assigned_at")
+    userId             String  @map("user_id")
+    professionalRoleId String  @map("professional_role_id")
+    isPrimary          Boolean @default(false) @map("is_primary")
+    yearsExperience    Int?    @map("years_experience")
 
-    user             User             @relation(fields: [userId], references: [id], onDelete: Cascade)
-    professionalRole ProfessionalRole @relation(fields: [professionalRoleId], references: [id], onDelete: Cascade)
+    // Per-role reputation
+    reputationPoints   Int @default(0) @map("reputation_points")
+    portfolioPostCount Int @default(0) @map("portfolio_post_count")
+
+    assignedAt DateTime @default(now()) @map("assigned_at")
+
+    user             User                   @relation(fields: [userId], references: [id], onDelete: Cascade)
+    professionalRole ProfessionalRole       @relation(fields: [professionalRoleId], references: [id], onDelete: Cascade)
+    postTags         PostProfessionalRole[]
 
     @@id([userId, professionalRoleId])
     @@index([userId])
     @@index([professionalRoleId])
+    @@index([reputationPoints])
     @@map("user_professional_roles")
 }
 
 // ============================================
-// 7. ACTIVITY/AUDIT LOGGING
+// 5. POSTS (CORE CONTENT)
+// ============================================
+model Post {
+    id      String  @id @default(cuid())
+    userId  String  @map("user_id")
+    content String? @db.Text
+
+    // Type & Status
+    postType   PostType       @default(CASUAL) @map("post_type")
+    status     PostStatus     @default(PUBLISHED)
+    visibility PostVisibility @default(PUBLIC)
+
+    // AI Content
+    isAiGenerated Boolean @default(false) @map("is_ai_generated")
+
+    // Metrics (denormalized)
+    viewCount    Int @default(0) @map("view_count")
+    likeCount    Int @default(0) @map("like_count")
+    commentCount Int @default(0) @map("comment_count")
+    shareCount   Int @default(0) @map("share_count")
+
+    // Timestamps
+    createdAt   DateTime  @default(now()) @map("created_at")
+    updatedAt   DateTime  @updatedAt @map("updated_at")
+    publishedAt DateTime? @map("published_at")
+    deletedAt   DateTime? @map("deleted_at")
+
+    // Relations
+    user              User                   @relation(fields: [userId], references: [id], onDelete: Cascade)
+    media             PostMedia[]
+    professionalRoles PostProfessionalRole[]
+    hashtags          PostHashtag[]
+    likes             PostLike[]
+    comments          PostComment[]
+    moderationReports ModerationReport[]
+    moderationQueue   ModerationQueue[]
+    editHistory       PostEditHistory[]
+    privacy           PostPrivacy?
+    analytics         PostAnalytics?
+    collectionPosts   CollectionPost[]
+
+    @@index([userId, createdAt])
+    @@index([status, publishedAt])
+    @@index([postType, status, publishedAt])
+    @@map("posts")
+}
+
+// ============================================
+// 6. POST MEDIA
+// ============================================
+model PostMedia {
+    id     String @id @default(cuid())
+    postId String @map("post_id")
+
+    mediaType MediaType @map("media_type")
+    url       String    @db.Text
+
+    // External video metadata
+    videoProvider String? @map("video_provider")
+    videoId       String? @map("video_id")
+    thumbnailUrl  String? @map("thumbnail_url") @db.Text
+
+    // File metadata
+    fileName String? @map("file_name")
+    fileSize Int?    @map("file_size")
+    mimeType String? @map("mime_type")
+    width    Int?
+    height   Int?
+    duration Int?
+
+    // Ordering
+    displayOrder Int @default(0) @map("display_order")
+
+    createdAt DateTime @default(now()) @map("created_at")
+
+    post Post @relation(fields: [postId], references: [id], onDelete: Cascade)
+
+    @@index([postId, displayOrder])
+    @@index([mediaType])
+    @@map("post_media")
+}
+
+// ============================================
+// 7. POST PROFESSIONAL ROLES (Tagging)
+// ============================================
+model PostProfessionalRole {
+    id                 String @id @default(cuid())
+    postId             String @map("post_id")
+    userId             String @map("user_id") // Post owner
+    professionalRoleId String @map("professional_role_id")
+
+    // Reputation earned from this post
+    reputationEarned Int @default(0) @map("reputation_earned")
+
+    createdAt DateTime @default(now()) @map("created_at")
+
+    post                 Post                 @relation(fields: [postId], references: [id], onDelete: Cascade)
+    professionalRole     ProfessionalRole     @relation(fields: [professionalRoleId], references: [id], onDelete: Cascade)
+    userProfessionalRole UserProfessionalRole @relation(fields: [userId, professionalRoleId], references: [userId, professionalRoleId], onDelete: Cascade)
+
+    @@unique([postId, professionalRoleId])
+    @@index([postId])
+    @@index([userId])
+    @@index([professionalRoleId])
+    @@index([userId, professionalRoleId])
+    @@map("post_professional_roles")
+}
+
+// ============================================
+// 8. HASHTAGS & DISCOVERY
+// ============================================
+model Hashtag {
+    id   String @id @default(cuid())
+    name String @unique
+
+    useCount   Int      @default(0) @map("use_count")
+    lastUsedAt DateTime @default(now()) @map("last_used_at")
+
+    isApproved  Boolean @default(false) @map("is_approved")
+    isTrending  Boolean @default(false) @map("is_trending")
+    suggestedAs String? @map("suggested_as")
+
+    createdAt DateTime @default(now()) @map("created_at")
+
+    posts PostHashtag[]
+
+    @@index([name])
+    @@index([isTrending, useCount])
+    @@index([isApproved])
+    @@index([lastUsedAt])
+    @@map("hashtags")
+}
+
+model PostHashtag {
+    postId    String @map("post_id")
+    hashtagId String @map("hashtag_id")
+
+    createdAt DateTime @default(now()) @map("created_at")
+
+    post    Post    @relation(fields: [postId], references: [id], onDelete: Cascade)
+    hashtag Hashtag @relation(fields: [hashtagId], references: [id], onDelete: Cascade)
+
+    @@id([postId, hashtagId])
+    @@index([hashtagId])
+    @@map("post_hashtags")
+}
+
+// ============================================
+// 9. ENGAGEMENT (FLAT COMMENTS - NO NESTING)
+// ============================================
+model PostLike {
+    userId String @map("user_id")
+    postId String @map("post_id")
+
+    createdAt DateTime @default(now()) @map("created_at")
+
+    user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+    post Post @relation(fields: [postId], references: [id], onDelete: Cascade)
+
+    @@id([userId, postId])
+    @@index([postId, createdAt])
+    @@index([userId])
+    @@map("post_likes")
+}
+
+model PostComment {
+    id      String @id @default(cuid())
+    postId  String @map("post_id")
+    userId  String @map("user_id")
+    content String @db.Text
+
+    // For @mentions (PostgreSQL array)
+    mentionedUsers String[] @map("mentioned_users")
+
+    likeCount Int @default(0) @map("like_count")
+
+    createdAt DateTime  @default(now()) @map("created_at")
+    updatedAt DateTime  @updatedAt @map("updated_at")
+    deletedAt DateTime? @map("deleted_at")
+
+    post  Post          @relation(fields: [postId], references: [id], onDelete: Cascade)
+    user  User          @relation(fields: [userId], references: [id], onDelete: Cascade)
+    likes CommentLike[]
+
+    @@index([postId, createdAt])
+    @@index([userId])
+    @@map("post_comments")
+}
+
+model CommentLike {
+    userId    String @map("user_id")
+    commentId String @map("comment_id")
+
+    createdAt DateTime @default(now()) @map("created_at")
+
+    user    User        @relation(fields: [userId], references: [id], onDelete: Cascade)
+    comment PostComment @relation(fields: [commentId], references: [id], onDelete: Cascade)
+
+    @@id([userId, commentId])
+    @@index([commentId])
+    @@map("comment_likes")
+}
+
+// ============================================
+// 10. UNIFIED MODERATION SYSTEM (HYBRID: Flexible Categories + Fixed Workflow)
+// ============================================
+
+// Admin-configurable moderation categories
+model ModerationCategory {
+    id          String  @id @default(cuid())
+    key         String  @unique // "ai_undisclosed", "nsfw", etc.
+    name        String // "AI Content Not Disclosed"
+    description String? @db.Text
+
+    // Configuration
+    isActive      Boolean @default(true) @map("is_active")
+    severity      Int     @default(1) // 1-5 scale for auto-priority
+    autoAction    String? @map("auto_action") // "warn", "remove", "ban", null
+    requiresProof Boolean @default(false) @map("requires_proof") // User must provide evidence
+
+    // Display
+    icon         String?
+    color        String? // For UI badges (#ef4444, etc.)
+    displayOrder Int     @default(0) @map("display_order")
+
+    createdAt DateTime @default(now()) @map("created_at")
+    updatedAt DateTime @updatedAt @map("updated_at")
+
+    reports ModerationReport[]
+    queue   ModerationQueue[]
+
+    @@index([key])
+    @@index([isActive, displayOrder])
+    @@index([severity])
+    @@map("moderation_categories")
+}
+
+// Individual reports from users (one report per user per post)
+model ModerationReport {
+    id         String @id @default(cuid())
+    queueId    String @map("queue_id")
+    postId     String @map("post_id")
+    reportedBy String @map("reported_by")
+
+    categoryKey String  @map("category_key") // Reference to category.key
+    details     String? @db.Text
+
+    // Weighted reporting (prevent abuse)
+    reportWeight       Float @default(1.0) @map("report_weight")
+    reporterReputation Int   @map("reporter_reputation")
+    reporterTrustScore Float @default(1.0) @map("reporter_trust_score")
+
+    createdAt DateTime @default(now()) @map("created_at")
+
+    category ModerationCategory @relation(fields: [categoryKey], references: [key], onDelete: Restrict)
+    queue    ModerationQueue    @relation(fields: [queueId], references: [id], onDelete: Cascade)
+    post     Post               @relation(fields: [postId], references: [id], onDelete: Cascade)
+    reporter User               @relation("ModerationReporter", fields: [reportedBy], references: [id], onDelete: Cascade)
+
+    @@unique([postId, reportedBy])
+    @@index([queueId])
+    @@index([postId])
+    @@index([reportedBy])
+    @@index([categoryKey])
+    @@index([createdAt])
+    @@map("moderation_reports")
+}
+
+// Aggregated moderation queue (one item per post per category)
+model ModerationQueue {
+    id     String @id @default(cuid())
+    postId String @map("post_id")
+    userId String @map("user_id") // Post owner
+
+    categoryKey String @map("category_key") // Reference to category.key
+
+    // Aggregated data from reports
+    reportCount   Int   @default(1) @map("report_count")
+    totalWeight   Float @default(0.0) @map("total_weight") // Sum of all report weights
+    averageWeight Float @default(1.0) @map("average_weight") // Avg weight (for priority)
+
+    status   ModerationStatus   @default(PENDING)
+    priority ModerationPriority @default(NORMAL)
+
+    // Review info
+    reviewedBy  String?   @map("reviewed_by")
+    reviewedAt  DateTime? @map("reviewed_at")
+    decision    String?   @db.Text
+    actionTaken String?   @map("action_taken")
+
+    createdAt DateTime @default(now()) @map("created_at")
+    updatedAt DateTime @updatedAt @map("updated_at")
+
+    category  ModerationCategory @relation(fields: [categoryKey], references: [key], onDelete: Restrict)
+    post      Post               @relation(fields: [postId], references: [id], onDelete: Cascade)
+    user      User               @relation("PostOwner", fields: [userId], references: [id], onDelete: Cascade)
+    moderator User?              @relation("Moderator", fields: [reviewedBy], references: [id], onDelete: SetNull)
+    reports   ModerationReport[]
+
+    @@unique([postId, categoryKey]) // One queue item per post per category
+    @@index([status, priority, createdAt])
+    @@index([postId])
+    @@index([userId])
+    @@index([categoryKey])
+    @@index([totalWeight]) // For prioritization
+    @@map("moderation_queue")
+}
+
+// ============================================
+// 12. RATE LIMITING (Anti-spam)
+// ============================================
+model UserPostRateLimit {
+    userId String @id @map("user_id")
+
+    postsLast24h  Int       @default(0) @map("posts_last_24h")
+    postsLastHour Int       @default(0) @map("posts_last_hour")
+    lastPostAt    DateTime? @map("last_post_at")
+
+    hourlyResetAt DateTime @default(now()) @map("hourly_reset_at")
+    dailyResetAt  DateTime @default(now()) @map("daily_reset_at")
+
+    violationCount  Int       @default(0) @map("violation_count")
+    lastViolationAt DateTime? @map("last_violation_at")
+
+    user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+    @@map("user_post_rate_limits")
+}
+
+// ============================================
+// 13. POST PRIVACY CONTROLS
+// ============================================
+model PostPrivacy {
+    postId String @id @map("post_id")
+
+    canComment  VisibilityLevel @default(EVERYONE) @map("can_comment")
+    canShare    VisibilityLevel @default(EVERYONE) @map("can_share")
+    canDownload VisibilityLevel @default(CONNECTIONS) @map("can_download")
+
+    excludedUsers String[] @map("excluded_users")
+
+    post Post @relation(fields: [postId], references: [id], onDelete: Cascade)
+
+    @@map("post_privacy")
+}
+
+// ============================================
+// 14. POST EDIT HISTORY (Audit trail)
+// ============================================
+model PostEditHistory {
+    id     String @id @default(cuid())
+    postId String @map("post_id")
+
+    oldContent    String? @map("old_content") @db.Text
+    newContent    String? @map("new_content") @db.Text
+    changedFields Json?   @map("changed_fields")
+
+    editedAt DateTime @default(now()) @map("edited_at")
+    editedBy String   @map("edited_by")
+
+    post Post @relation(fields: [postId], references: [id], onDelete: Cascade)
+
+    @@index([postId, editedAt])
+    @@map("post_edit_history")
+}
+
+// ============================================
+// 15. ACHIEVEMENTS (SIMPLIFIED - NO COMPLEX TRIGGERS)
+// ============================================
+model Achievement {
+    id          String @id @default(cuid())
+    key         String @unique
+    name        String
+    description String @db.Text
+
+    // Category for lazy evaluation grouping
+    category AchievementCategory @default(MANUAL)
+
+    reputationPoints Int @default(0) @map("reputation_points")
+
+    icon       String?
+    badgeImage String? @map("badge_image")
+    isActive   Boolean @default(true) @map("is_active")
+
+    createdAt DateTime @default(now()) @map("created_at")
+
+    userAchievements UserAchievement[]
+
+    @@index([isActive, category])
+    @@map("achievements")
+}
+
+model UserAchievement {
+    userId        String @map("user_id")
+    achievementId String @map("achievement_id")
+
+    earnedAt DateTime @default(now()) @map("earned_at")
+
+    // Optional: Snapshot of conditions when earned
+    metadata Json?
+
+    user        User        @relation(fields: [userId], references: [id], onDelete: Cascade)
+    achievement Achievement @relation(fields: [achievementId], references: [id], onDelete: Cascade)
+
+    @@id([userId, achievementId])
+    @@index([userId, earnedAt])
+    @@map("user_achievements")
+}
+
+// Track last achievement check (prevent duplicate checks)
+model UserAchievementCheck {
+    userId        String   @id @map("user_id")
+    lastCheckedAt DateTime @default(now()) @map("last_checked_at")
+
+    user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+    @@map("user_achievement_checks")
+}
+
+// ============================================
+// 16. PORTFOLIO COLLECTIONS
+// ============================================
+model PortfolioCollection {
+    id          String  @id @default(cuid())
+    userId      String  @map("user_id")
+    name        String
+    description String? @db.Text
+
+    isPublic     Boolean @default(true) @map("is_public")
+    displayOrder Int     @default(0) @map("display_order")
+
+    createdAt DateTime @default(now()) @map("created_at")
+    updatedAt DateTime @updatedAt @map("updated_at")
+
+    user  User             @relation(fields: [userId], references: [id], onDelete: Cascade)
+    posts CollectionPost[]
+
+    @@index([userId, displayOrder])
+    @@map("portfolio_collections")
+}
+
+model CollectionPost {
+    collectionId String @map("collection_id")
+    postId       String @map("post_id")
+    displayOrder Int    @default(0) @map("display_order")
+
+    addedAt DateTime @default(now()) @map("added_at")
+
+    collection PortfolioCollection @relation(fields: [collectionId], references: [id], onDelete: Cascade)
+    post       Post                @relation(fields: [postId], references: [id], onDelete: Cascade)
+
+    @@id([collectionId, postId])
+    @@index([collectionId, displayOrder])
+    @@map("collection_posts")
+}
+
+// ============================================
+// 17. POST ANALYTICS (Optional - Future)
+// ============================================
+model PostAnalytics {
+    postId String @id @map("post_id")
+
+    viewsByDay    Json @default("{}") @map("views_by_day")
+    likesByDay    Json @default("{}") @map("likes_by_day")
+    commentsByDay Json @default("{}") @map("comments_by_day")
+
+    engagementRate Float @default(0.0) @map("engagement_rate")
+    topViewerRoles Json? @map("top_viewer_roles")
+
+    lastUpdated DateTime @default(now()) @map("last_updated")
+
+    post Post @relation(fields: [postId], references: [id], onDelete: Cascade)
+
+    @@map("post_analytics")
+}
+
+// ============================================
+// 18. REPUTATION CONFIG (Admin adjustable)
+// ============================================
+model ReputationConfig {
+    id       String   @id @default(cuid())
+    postType PostType @unique
+
+    likeMultiplier    Float @default(1.0) @map("like_multiplier")
+    commentMultiplier Float @default(1.0) @map("comment_multiplier")
+    viewMultiplier    Float @default(0.01) @map("view_multiplier")
+    shareMultiplier   Float @default(2.0) @map("share_multiplier")
+
+    basePoints Int @default(0) @map("base_points")
+
+    updatedAt DateTime @updatedAt @map("updated_at")
+
+    @@map("reputation_config")
+}
+
+// ============================================
+// 19. ACTIVITY/AUDIT LOGGING
 // ============================================
 model ActivityLog {
     id String @id @default(cuid())
 
-    // Who performed the action
-    userId    String? @map("user_id") // null for system/anonymous actions
+    userId    String? @map("user_id")
     ipAddress String? @map("ip_address")
     userAgent String? @map("user_agent")
 
-    // What action was performed
-    action         String // "user.login", "post.create", "profile.update"
-    actionCategory String @map("action_category") // "auth", "content", "profile"
+    action         String @map("action")
+    actionCategory String @map("action_category")
 
-    // What was affected
-    resourceType String? @map("resource_type") // "Post", "User", "Comment"
+    resourceType String? @map("resource_type")
     resourceId   String? @map("resource_id")
 
-    // Details
-    method   String? // "POST", "PUT", "DELETE"
-    endpoint String? // "/api/posts/123"
-    status   String  @default("success") // "success", "failure", "pending"
+    method   String? @map("method")
+    endpoint String? @map("endpoint")
+    status   String  @default("success")
 
-    // Changes (for update actions)
-    changesBefore Json? @map("changes_before") // old values
-    changesAfter  Json? @map("changes_after") // new values
+    changesBefore Json? @map("changes_before")
+    changesAfter  Json? @map("changes_after")
 
-    // Additional context
-    metadata     Json? // any additional data
+    metadata     Json?   @map("metadata")
     errorMessage String? @map("error_message")
-    duration     Int? // request duration in ms
+    duration     Int?
 
     createdAt DateTime @default(now()) @map("created_at")
 
@@ -260,21 +872,17 @@ model ActivityLog {
 }
 
 // ============================================
-// 8. REFERRAL TRACKING SYSTEM
+// 20. REFERRAL SYSTEM
 // ============================================
-
-// Each user gets one referral code for sharing
 model ReferralCode {
     id     String @id @default(cuid())
     userId String @unique @map("user_id")
-    code   String @unique // e.g., "JOHN_AB12CD" or custom slug
+    code   String @unique
 
-    // Basic counters (denormalized for quick access)
     totalClicks      Int @default(0) @map("total_clicks")
     totalSignups     Int @default(0) @map("total_signups")
-    totalConversions Int @default(0) @map("total_conversions") // Signups that completed onboarding
+    totalConversions Int @default(0) @map("total_conversions")
 
-    // Metadata
     isActive  Boolean  @default(true) @map("is_active")
     createdAt DateTime @default(now()) @map("created_at")
     updatedAt DateTime @updatedAt @map("updated_at")
@@ -289,23 +897,19 @@ model ReferralCode {
     @@map("referral_codes")
 }
 
-// Track every click on a referral link (pre-signup)
 model ReferralClick {
     id             String @id @default(cuid())
     referralCodeId String @map("referral_code_id")
 
-    // Anonymous visitor tracking (before they sign up)
     ipAddress   String? @map("ip_address")
     userAgent   String? @map("user_agent")
-    referrerUrl String? @map("referrer_url") // Where they came from (e.g., Twitter, Email)
-    landingPage String? @map("landing_page") // Where they landed on Cresp
+    referrerUrl String? @map("referrer_url")
+    landingPage String? @map("landing_page")
 
-    // Conversion tracking
     convertedToSignup Boolean   @default(false) @map("converted_to_signup")
-    convertedUserId   String?   @map("converted_user_id") // Set when they signup
+    convertedUserId   String?   @map("converted_user_id")
     convertedAt       DateTime? @map("converted_at")
 
-    // Timestamps
     clickedAt DateTime @default(now()) @map("clicked_at")
 
     referralCode ReferralCode @relation(fields: [referralCodeId], references: [id], onDelete: Cascade)
@@ -318,29 +922,22 @@ model ReferralClick {
     @@map("referral_clicks")
 }
 
-// Track successful referrals (post-signup)
 model Referral {
     id             String @id @default(cuid())
     referralCodeId String @map("referral_code_id")
 
-    // Who referred (the inviter)
     referrerId String @map("referrer_id")
-
-    // Who was referred (the invitee)
     referredId String @unique @map("referred_id")
 
-    // Conversion funnel tracking
     status ReferralStatus @default(SIGNED_UP)
 
-    // Milestone timestamps (track user journey)
     signedUpAt           DateTime  @default(now()) @map("signed_up_at")
     emailVerifiedAt      DateTime? @map("email_verified_at")
     profileCompletedAt   DateTime? @map("profile_completed_at")
     firstPostAt          DateTime? @map("first_post_at")
     firstCollaborationAt DateTime? @map("first_collaboration_at")
 
-    // Flexible metadata for future extensions
-    metadata Json? // Store any additional tracking data
+    metadata Json?
 
     referrer     User         @relation("ReferrerUser", fields: [referrerId], references: [id], onDelete: Cascade)
     referred     User         @relation("ReferredUser", fields: [referredId], references: [id], onDelete: Cascade)
@@ -354,12 +951,49 @@ model Referral {
     @@map("referrals")
 }
 
-// Referral conversion stages (for funnel analysis)
-enum ReferralStatus {
-    SIGNED_UP // Just created account
-    EMAIL_VERIFIED // Verified their email
-    PROFILE_COMPLETED // Finished onboarding/journey
-    FIRST_POST // Created first content (future)
-    FIRST_COLLABORATION // Engaged in first collab (future)
-    ACTIVE_USER // Regular activity, e.g., 7+ days (future)
+// ============================================
+// 28. USER FEEDBACK (Product improvement - MVP)
+// ============================================
+model UserFeedback {
+    id     String @id @default(cuid())
+    userId String @map("user_id")
+
+    // Context
+    feedbackType String @map("feedback_type") // "onboarding", "first_post", "milestone"
+    trigger      String // Specific trigger like "onboarding_complete", "first_portfolio_post"
+
+    // Response
+    rating  Int? // 1-5 emoji rating
+    comment String? @db.Text // Optional detailed feedback
+
+    // Metadata
+    url       String? // Page they were on
+    userAgent String? @map("user_agent") @db.Text
+
+    createdAt DateTime @default(now()) @map("created_at")
+
+    user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+    @@index([userId, createdAt])
+    @@index([feedbackType])
+    @@index([trigger])
+    @@map("user_feedback")
+}
+
+model FeedbackPromptLog {
+    id     String @id @default(cuid())
+    userId String @map("user_id")
+
+    trigger   String // What triggered the prompt
+    shown     Boolean @default(true)
+    dismissed Boolean @default(false) // User clicked X
+    responded Boolean @default(false) // User submitted feedback
+
+    shownAt DateTime @default(now()) @map("shown_at")
+
+    user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+    @@index([userId, shownAt])
+    @@index([trigger])
+    @@map("feedback_prompt_log")
 }

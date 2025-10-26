@@ -113,11 +113,14 @@ export default function RootLayout({
 					theme="light"
 					toastOptions={{
 						style: {
-							background: "rgba(255, 255, 255, 0.05)",
-							border: "1px solid rgba(255, 255, 255, 0.1)",
-							color: "white",
+							background: "white",
+							border: "1px solid #e5e7eb",
+							color: "#1f2937",
+							boxShadow: "0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05)",
 						},
+						className: "font-medium",
 					}}
+					richColors
 				/>
 			</body>
 		</html>

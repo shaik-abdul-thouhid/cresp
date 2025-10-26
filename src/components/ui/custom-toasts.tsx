@@ -6,41 +6,41 @@ interface ToastProps {
 }
 
 export const SuccessToast = ({ title, message }: ToastProps) => (
-	<div className="flex items-start gap-3 rounded-xl border border-purple-500/50 bg-gradient-to-r from-purple-500/20 to-pink-500/20 p-4 backdrop-blur-sm">
-		<CheckCircle className="h-6 w-6 shrink-0 text-purple-400" />
+	<div className="flex items-start gap-3 rounded-xl border border-green-200 bg-white p-4 shadow-lg">
+		<CheckCircle className="h-6 w-6 shrink-0 text-green-600" />
 		<div className="flex-1">
-			<h4 className="mb-0.5 font-semibold text-white">{title}</h4>
-			{message && <p className="text-gray-300 text-sm">{message}</p>}
+			<h4 className="mb-0.5 font-semibold text-gray-900">{title}</h4>
+			{message && <p className="text-gray-600 text-sm">{message}</p>}
 		</div>
 	</div>
 );
 
 export const ErrorToast = ({ title, message }: ToastProps) => (
-	<div className="flex items-start gap-3 rounded-xl border border-red-500/50 bg-red-500/20 p-4 backdrop-blur-sm">
-		<XCircle className="h-6 w-6 shrink-0 text-red-400" />
+	<div className="flex items-start gap-3 rounded-xl border border-red-200 bg-white p-4 shadow-lg">
+		<XCircle className="h-6 w-6 shrink-0 text-red-600" />
 		<div className="flex-1">
-			<h4 className="mb-0.5 font-semibold text-white">{title}</h4>
-			{message && <p className="text-red-200 text-sm">{message}</p>}
+			<h4 className="mb-0.5 font-semibold text-gray-900">{title}</h4>
+			{message && <p className="text-gray-600 text-sm">{message}</p>}
 		</div>
 	</div>
 );
 
 export const WarningToast = ({ title, message }: ToastProps) => (
-	<div className="flex items-start gap-3 rounded-xl border border-yellow-500/50 bg-yellow-500/20 p-4 backdrop-blur-sm">
-		<AlertCircle className="h-6 w-6 shrink-0 text-yellow-400" />
+	<div className="flex items-start gap-3 rounded-xl border border-yellow-200 bg-white p-4 shadow-lg">
+		<AlertCircle className="h-6 w-6 shrink-0 text-yellow-600" />
 		<div className="flex-1">
-			<h4 className="mb-0.5 font-semibold text-white">{title}</h4>
-			{message && <p className="text-sm text-yellow-200">{message}</p>}
+			<h4 className="mb-0.5 font-semibold text-gray-900">{title}</h4>
+			{message && <p className="text-gray-600 text-sm">{message}</p>}
 		</div>
 	</div>
 );
 
 export const InfoToast = ({ title, message }: ToastProps) => (
-	<div className="flex items-start gap-3 rounded-xl border border-blue-500/50 bg-blue-500/20 p-4 backdrop-blur-sm">
-		<Info className="h-6 w-6 shrink-0 text-blue-400" />
+	<div className="flex items-start gap-3 rounded-xl border border-blue-200 bg-white p-4 shadow-lg">
+		<Info className="h-6 w-6 shrink-0 text-blue-600" />
 		<div className="flex-1">
-			<h4 className="mb-0.5 font-semibold text-white">{title}</h4>
-			{message && <p className="text-blue-200 text-sm">{message}</p>}
+			<h4 className="mb-0.5 font-semibold text-gray-900">{title}</h4>
+			{message && <p className="text-gray-600 text-sm">{message}</p>}
 		</div>
 	</div>
 );

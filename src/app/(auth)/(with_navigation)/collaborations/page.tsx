@@ -13,27 +13,44 @@ export default function CollaborationsPage() {
 
 			{/* Stats Cards */}
 			<div className="grid gap-6 md:grid-cols-3">
-				<div className="rounded-xl bg-gradient-to-br from-blue-500 to-cyan-500 p-6 text-white shadow-sm">
-					<div className="mb-2 text-3xl">🤝</div>
-					<h3 className="mb-1 font-semibold text-2xl">0</h3>
-					<p className="text-blue-100 text-sm">Active Collaborations</p>
-				</div>
-				<div className="rounded-xl bg-gradient-to-br from-purple-500 to-pink-500 p-6 text-white shadow-sm">
-					<div className="mb-2 text-3xl">📨</div>
-					<h3 className="mb-1 font-semibold text-2xl">0</h3>
-					<p className="text-purple-100 text-sm">Pending Requests</p>
-				</div>
-				<div className="rounded-xl bg-gradient-to-br from-orange-500 to-red-500 p-6 text-white shadow-sm">
-					<div className="mb-2 text-3xl">✅</div>
-					<h3 className="mb-1 font-semibold text-2xl">0</h3>
-					<p className="text-orange-100 text-sm">Completed Projects</p>
-				</div>
+				{[
+					{
+						icon: "🤝",
+						count: 0,
+						label: "Active Collaborations",
+						gradient: "from-blue-500 to-cyan-500",
+						textColor: "text-blue-100",
+					},
+					{
+						icon: "📨",
+						count: 0,
+						label: "Pending Requests",
+						gradient: "from-purple-500 to-pink-500",
+						textColor: "text-purple-100",
+					},
+					{
+						icon: "✅",
+						count: 0,
+						label: "Completed Projects",
+						gradient: "from-orange-500 to-red-500",
+						textColor: "text-orange-100",
+					},
+				].map((stat) => (
+					<div
+						key={stat.label}
+						className={`rounded-xl bg-gradient-to-br ${stat.gradient} p-6 text-white shadow-sm`}
+					>
+						<div className="mb-2 text-3xl">{stat.icon}</div>
+						<h3 className="mb-1 font-semibold text-2xl">{stat.count}</h3>
+						<p className={`${stat.textColor} text-sm`}>{stat.label}</p>
+					</div>
+				))}
 			</div>
 
 			{/* Open Projects */}
 			<div className="rounded-xl bg-white p-6 shadow-sm">
 				<h2 className="mb-4 font-semibold text-xl">Open Projects</h2>
-				<div className="flex min-h-[400px] items-center justify-center rounded-lg border-2 border-dashed border-gray-300">
+				<div className="flex min-h-[400px] items-center justify-center rounded-lg border-2 border-gray-300 border-dashed">
 					<div className="text-center">
 						<p className="mb-2 text-gray-500 text-lg">
 							No collaboration projects yet
@@ -53,4 +70,3 @@ export default function CollaborationsPage() {
 		</div>
 	);
 }
-

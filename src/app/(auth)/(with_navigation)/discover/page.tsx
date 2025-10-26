@@ -1,3 +1,13 @@
+const DISCOVER_TABS = [
+	"All",
+	"Directors",
+	"Actors",
+	"Writers",
+	"Singers",
+	"Photographers",
+	"Editors",
+] as const;
+
 export default function DiscoverPage() {
 	return (
 		<div className="space-y-6">
@@ -11,17 +21,15 @@ export default function DiscoverPage() {
 
 			{/* Filter Tabs */}
 			<div className="flex gap-4 overflow-x-auto rounded-xl bg-white p-4 shadow-sm">
-				{["All", "Directors", "Actors", "Writers", "Singers", "Photographers", "Editors"].map(
-					(tab) => (
-						<button
-							key={tab}
-							type="button"
-							className="whitespace-nowrap rounded-lg bg-gradient-to-r from-purple-600 to-indigo-600 px-6 py-2 font-medium text-sm text-white first:opacity-100 hover:from-purple-700 hover:to-indigo-700"
-						>
-							{tab}
-						</button>
-					),
-				)}
+				{DISCOVER_TABS.map((tab) => (
+					<button
+						key={tab}
+						type="button"
+						className="whitespace-nowrap rounded-lg bg-gradient-to-r from-purple-600 to-indigo-600 px-6 py-2 font-medium text-sm text-white first:opacity-100 hover:from-purple-700 hover:to-indigo-700"
+					>
+						{tab}
+					</button>
+				))}
 			</div>
 
 			{/* Content Grid */}

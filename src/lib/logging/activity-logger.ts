@@ -17,6 +17,8 @@ export const ActivityActions = {
 	AUTH_LOGOUT: "auth.logout",
 	AUTH_SESSION_INVALIDATE: "auth.session_invalidate",
 	AUTH_SESSION_REVOKE: "auth.session_revoke",
+	AUTH_VERIFY_EMAIL: "auth.verify_email",
+	AUTH_PASSWORD_RESET: "auth.password_reset",
 
 	// Referral actions
 	REFERRAL_GENERATE: "referral.generate",
@@ -27,6 +29,37 @@ export const ActivityActions = {
 	// Onboarding actions
 	ONBOARDING_COMPLETE: "onboarding.complete",
 	ONBOARDING_SKIP: "onboarding.skip",
+
+	// Profile actions
+	PROFILE_VIEW: "profile.view",
+	PROFILE_UPDATE: "profile.update",
+	PROFILE_DELETE: "profile.delete",
+
+	// Post/Content actions
+	POST_CREATE: "post.create",
+	POST_UPDATE: "post.update",
+	POST_DELETE: "post.delete",
+	POST_VIEW: "post.view",
+	POST_LIKE: "post.like",
+	POST_UNLIKE: "post.unlike",
+	POST_COMMENT: "post.comment",
+	POST_SHARE: "post.share",
+
+	// Admin actions
+	ADMIN_ROLE_ASSIGN: "admin.role_assign",
+	ADMIN_ROLE_REMOVE: "admin.role_remove",
+	ADMIN_USER_BAN: "admin.user_ban",
+	ADMIN_USER_UNBAN: "admin.user_unban",
+	ADMIN_POST_MODERATE: "admin.post_moderate",
+
+	// System actions
+	SYSTEM_ERROR: "system.error",
+	HTTP_REQUEST: "http.request",
+
+	// Feedback actions
+	FEEDBACK_PROMPT_SHOWN: "feedback.prompt_shown",
+	FEEDBACK_PROMPT_DISMISSED: "feedback.prompt_dismissed",
+	FEEDBACK_SUBMIT: "feedback.submit",
 
 	// Additional activity actions (not in seed.sql but used for logging)
 	AUTH_EMAIL_VERIFIED: "auth.email_verified", // Used when email is verified

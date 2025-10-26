@@ -2,21 +2,24 @@ import type { NextRequest } from "next/server";
 import { NextResponse } from "next/server";
 import { verifyToken } from "~/lib/auth/jwt";
 
+// Force Node.js runtime for middleware (required for jsonwebtoken)
+export const runtime = "nodejs";
+
+const PROTECTED_API_ROUTES = [
+	"/api/user/",
+	"/api/profile/",
+	"/api/posts/",
+	"/api/comments/",
+	"/api/collaborations/",
+	"/api/messages/",
+	"/api/media/",
+	"/api/feedback/",
+] as const;
+
 export function middleware(request: NextRequest) {
 	const { pathname } = request.nextUrl;
 
-	// Only protect specific API routes that require authentication
-	const protectedApiRoutes = [
-		"/api/user/",
-		"/api/profile/",
-		"/api/posts/",
-		"/api/comments/",
-		"/api/collaborations/",
-		"/api/messages/",
-		// Add more protected API routes as needed
-	];
-
-	const isProtectedApi = protectedApiRoutes.some((route) =>
+	const isProtectedApi = PROTECTED_API_ROUTES.some((route) =>
 		pathname.startsWith(route)
 	);
 
@@ -30,6 +33,8 @@ export function middleware(request: NextRequest) {
 				{ status: 401 }
 			);
 		}
+
+		console.log("token", token);
 
 		const user = verifyToken(token);
 		if (!user) {

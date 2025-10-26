@@ -39,6 +39,15 @@
 	}
 }
 
+@keyframes fade-in {
+	from {
+		opacity: 0;
+	}
+	to {
+		opacity: 1;
+	}
+}
+
 @keyframes pulse-slow {
 	0%,
 	100% {
@@ -67,6 +76,10 @@
 
 .animate-pulse-slow {
 	animation: pulse-slow 3s ease-in-out infinite;
+}
+
+.animate-fade-in {
+	animation: fade-in 0.5s ease-out;
 }
 
 /* Onboarding animations with delays */
@@ -112,6 +125,16 @@ html {
 
 ::-webkit-scrollbar-thumb:hover {
 	background: #555;
+}
+
+/* Hide scrollbar utility class (for horizontal carousels) */
+.scrollbar-hide {
+	-ms-overflow-style: none; /* IE and Edge */
+	scrollbar-width: none; /* Firefox */
+}
+
+.scrollbar-hide::-webkit-scrollbar {
+	display: none; /* Chrome, Safari and Opera */
 }
 
 /* Mobile optimizations */

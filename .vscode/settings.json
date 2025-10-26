@@ -8,5 +8,8 @@
 		"source.fixAll.biome": "explicit",
 	},
 	"editor.formatOnSave": true,
-	"typescript.preferences.preferTypeOnlyAutoImports": true
+	"typescript.preferences.preferTypeOnlyAutoImports": true,
+	"cSpell.words": [
+		"Dailymotion"
+	]
 }

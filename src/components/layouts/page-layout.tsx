@@ -19,7 +19,7 @@ export async function PageLayout({ children }: PageLayoutProps) {
 			{/* Render navigation based on auth status */}
 			{fullUser ? <Navigation user={fullUser} /> : <PublicNavigation />}
 
-			<main className="mx-auto w-full max-w-7xl flex-1 px-4 pt-6 pb-6 sm:px-6 lg:px-8">
+			<main className="mx-auto w-full max-w-7xl flex-1 px-2 pt-4 pb-6 sm:px-6 lg:px-8">
 				{children}
 			</main>
 

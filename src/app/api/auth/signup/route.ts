@@ -1,4 +1,9 @@
 import { NextResponse } from "next/server";
+import {
+	errorResponse,
+	extractRequestMetadata,
+	validationErrorResponse,
+} from "~/lib/api/utils";
 import { generateVerificationToken } from "~/lib/auth/jwt";
 import { hashPassword } from "~/lib/auth/password";
 import { signupSchema } from "~/lib/auth/validation";
@@ -25,13 +30,7 @@ export async function POST(request: Request) {
 		// Validate input
 		const validation = signupSchema.safeParse(body);
 		if (!validation.success) {
-			return NextResponse.json(
-				{
-					error:
-						validation.error.errors[0]?.message || "Invalid input",
-				},
-				{ status: 400 }
-			);
+			return validationErrorResponse(validation.error);
 		}
 
 		const { username, email, password } = validation.data;
@@ -81,6 +80,7 @@ export async function POST(request: Request) {
 
 					// Log verification email resend request
 					try {
+						const requestMetadata = extractRequestMetadata(request);
 						await logActivity({
 							userId: existingUser.id,
 							action: ActivityActions.AUTH_VERIFICATION_EMAIL_RESENT,
@@ -88,15 +88,7 @@ export async function POST(request: Request) {
 							request: {
 								method: "POST",
 								endpoint: "/api/auth/signup",
-								ipAddress:
-									request.headers
-										.get("x-forwarded-for")
-										?.split(",")[0] ||
-									request.headers.get("x-real-ip") ||
-									undefined,
-								userAgent:
-									request.headers.get("user-agent") ||
-									undefined,
+								...requestMetadata,
 							},
 							metadata: {
 								reason: "duplicate_signup_unverified",
@@ -128,19 +120,14 @@ export async function POST(request: Request) {
 					);
 				}
 
-				return NextResponse.json(
-					{
-						error: "Email already registered and verified. Please login.",
-					},
-					{ status: 400 }
+				return errorResponse(
+					"Email already registered and verified. Please login.",
+					400
 				);
 			}
 
 			if (existingUser.username === username) {
-				return NextResponse.json(
-					{ error: "Username already taken" },
-					{ status: 400 }
-				);
+				return errorResponse("Username already taken", 400);
 			}
 		}
 
@@ -207,11 +194,7 @@ export async function POST(request: Request) {
 		// Handle referral if present
 		if (referralCode) {
 			try {
-				const ipAddress =
-					request.headers.get("x-forwarded-for")?.split(",")[0] ||
-					request.headers.get("x-real-ip") ||
-					undefined;
-
+				const { ipAddress } = extractRequestMetadata(request);
 				await recordReferralSignup(referralCode, result.id, ipAddress);
 			} catch (error) {
 				console.error("Error recording referral:", error);
@@ -237,9 +220,6 @@ export async function POST(request: Request) {
 			request,
 		});
 
-		return NextResponse.json(
-			{ error: "Something went wrong. Please try again." },
-			{ status: 500 }
-		);
+		return errorResponse("Something went wrong. Please try again.");
 	}
 }

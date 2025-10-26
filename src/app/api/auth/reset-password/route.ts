@@ -1,4 +1,9 @@
-import { NextResponse } from "next/server";
+import {
+	errorResponse,
+	extractRequestMetadata,
+	successResponse,
+	validationErrorResponse,
+} from "~/lib/api/utils";
 import { hashPassword } from "~/lib/auth/password";
 import { resetPasswordSchema } from "~/lib/auth/validation";
 import { ActivityActions, logActivity, logError } from "~/lib/logging/helpers";
@@ -11,13 +16,7 @@ export async function POST(request: Request) {
 		// Validate input
 		const validation = resetPasswordSchema.safeParse(body);
 		if (!validation.success) {
-			return NextResponse.json(
-				{
-					error:
-						validation.error.errors[0]?.message || "Invalid input",
-				},
-				{ status: 400 }
-			);
+			return validationErrorResponse(validation.error);
 		}
 
 		const { token, password } = validation.data;
@@ -35,26 +34,17 @@ export async function POST(request: Request) {
 		});
 
 		if (!resetToken) {
-			return NextResponse.json(
-				{ error: "Invalid reset token" },
-				{ status: 400 }
-			);
+			return errorResponse("Invalid reset token", 400);
 		}
 
 		// Check if token is expired
 		if (resetToken.expiresAt < new Date()) {
-			return NextResponse.json(
-				{ error: "Reset token has expired" },
-				{ status: 400 }
-			);
+			return errorResponse("Reset token has expired", 400);
 		}
 
 		// Check if token was already consumed
 		if (resetToken.consumedAt) {
-			return NextResponse.json(
-				{ error: "Reset token already used" },
-				{ status: 400 }
-			);
+			return errorResponse("Reset token already used", 400);
 		}
 
 		// Hash new password
@@ -74,6 +64,7 @@ export async function POST(request: Request) {
 
 		// Log password reset consumption
 		try {
+			const requestMetadata = extractRequestMetadata(request);
 			await logActivity({
 				userId: resetToken.userId,
 				action: ActivityActions.AUTH_PASSWORD_RESET_CONSUME,
@@ -81,11 +72,7 @@ export async function POST(request: Request) {
 				request: {
 					method: "POST",
 					endpoint: "/api/auth/reset-password",
-					ipAddress:
-						request.headers.get("x-forwarded-for")?.split(",")[0] ||
-						request.headers.get("x-real-ip") ||
-						undefined,
-					userAgent: request.headers.get("user-agent") || undefined,
+					...requestMetadata,
 				},
 			});
 		} catch (error) {
@@ -93,7 +80,7 @@ export async function POST(request: Request) {
 			// Don't fail the flow if logging fails
 		}
 
-		return NextResponse.json({
+		return successResponse({
 			message:
 				"Password reset successfully! You can now log in with your new password.",
 		});
@@ -106,9 +93,6 @@ export async function POST(request: Request) {
 			request,
 		});
 
-		return NextResponse.json(
-			{ error: "Something went wrong. Please try again." },
-			{ status: 500 }
-		);
+		return errorResponse("Something went wrong. Please try again.");
 	}
 }
