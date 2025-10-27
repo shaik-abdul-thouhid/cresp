@@ -13,5 +13,14 @@
 		"Dailymotion",
 		"waitlist"
 	],
-	"postman.settings.dotenv-detection-notification-visibility": false
+	"postman.settings.dotenv-detection-notification-visibility": false,
+	"files.exclude": {
+		"**/.git": true,
+		"**/.svn": true,
+		"**/.hg": true,
+		"**/.DS_Store": true,
+		"**/Thumbs.db": true
+	},
+	"hide-files.files": [],
+	"DockerRun.DisableAutoGenerateConfig": true
 }

@@ -176,4 +176,5 @@ const pwaConfig = withPWA({
 	],
 });
 
+// @ts-ignore - next-pwa type incompatibility with Next.js 15
 export default pwaConfig(config);

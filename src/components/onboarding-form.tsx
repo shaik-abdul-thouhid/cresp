@@ -51,8 +51,7 @@ export function OnboardingForm({ user }: OnboardingFormProps) {
 		setIsSubmitting(true);
 		try {
 			await completeOnboarding({
-				userId: user.id,
-				roles: selectedRoles,
+				professionalRoleIds: selectedRoles,
 				bio,
 				location,
 			});

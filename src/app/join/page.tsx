@@ -1,16 +1,14 @@
 "use client";
 
 import { useRouter, useSearchParams } from "next/navigation";
-import { useEffect } from "react";
+import { Suspense, useEffect } from "react";
+
+export const dynamic = "force-dynamic";
 
 /**
- * /join?ref=CODE
- * Landing page for referral links
- * - Tracks the click
- * - Stores referral code in cookie
- * - Redirects to signup
+ * Inner component that uses useSearchParams
  */
-export default function JoinPage() {
+function JoinPageContent() {
 	const router = useRouter();
 	const searchParams = useSearchParams();
 	const referralCode = searchParams.get("ref");
@@ -47,5 +45,29 @@ export default function JoinPage() {
 				<p className="text-lg text-white">Redirecting...</p>
 			</div>
 		</div>
+	);
+}
+
+/**
+ * /join?ref=CODE
+ * Landing page for referral links
+ * - Tracks the click
+ * - Stores referral code in cookie
+ * - Redirects to signup
+ */
+export default function JoinPage() {
+	return (
+		<Suspense
+			fallback={
+				<div className="flex min-h-screen items-center justify-center bg-gradient-to-br from-purple-900 via-indigo-900 to-black">
+					<div className="text-center">
+						<div className="mb-4 h-12 w-12 animate-spin rounded-full border-4 border-white border-t-transparent" />
+						<p className="text-lg text-white">Loading...</p>
+					</div>
+				</div>
+			}
+		>
+			<JoinPageContent />
+		</Suspense>
 	);
 }

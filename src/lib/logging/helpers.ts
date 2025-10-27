@@ -5,6 +5,7 @@
 
 import type { NextRequest } from "next/server";
 import {
+	type ActivityAction,
 	ActivityActions,
 	getRequestMetadata,
 	logActivity,
@@ -13,6 +14,7 @@ import {
 
 // Re-export core functions for direct use
 export { ActivityActions, getRequestMetadata, logActivity, logActivityAsync };
+export type { ActivityAction };
 
 // ============================================
 // AUTHENTICATION LOGGING HELPERS
@@ -212,7 +214,7 @@ export async function logError(
 	error: Error,
 	context: {
 		userId?: string;
-		action?: string;
+		action?: ActivityAction;
 		resourceType?: string;
 		resourceId?: string;
 		request?: Request;
@@ -244,7 +246,7 @@ export async function logError(
  * Logs both success and failure
  */
 export function withActivityLogging<T, Args extends unknown[]>(
-	action: string,
+	action: ActivityAction,
 	fn: (...args: Args) => Promise<T>,
 	options?: {
 		getUserId?: (...args: Args) => string | undefined;
@@ -305,7 +307,7 @@ export async function logApiRoute(
 	request: NextRequest,
 	userId?: string,
 	options?: {
-		action?: string;
+		action?: ActivityAction;
 		resourceType?: string;
 		resourceId?: string;
 	}

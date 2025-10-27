@@ -2,9 +2,9 @@
 
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
-import { useEffect, useState } from "react";
+import { Suspense, useEffect, useState } from "react";
 
-export default function VerifyEmailPage() {
+function VerifyEmailContent() {
 	const searchParams = useSearchParams();
 	const router = useRouter();
 	const token = searchParams.get("token");
@@ -91,5 +91,20 @@ export default function VerifyEmailPage() {
 				</>
 			)}
 		</div>
+	);
+}
+
+export default function VerifyEmailPage() {
+	return (
+		<Suspense
+			fallback={
+				<div className="rounded-2xl bg-white/10 p-8 text-center shadow-2xl backdrop-blur-md">
+					<div className="mb-6 inline-block h-16 w-16 animate-spin rounded-full border-4 border-purple-500 border-t-transparent" />
+					<h2 className="mb-4 font-semibold text-2xl text-white">Loading...</h2>
+				</div>
+			}
+		>
+			<VerifyEmailContent />
+		</Suspense>
 	);
 }
