@@ -6,32 +6,21 @@ import { joinWaitlist } from "~/server/actions/waitlist";
 
 export default function Home() {
 	const [email, setEmail] = useState("");
-	const [role, setRole] = useState("");
-	const [painPoint, setPainPoint] = useState("");
 	const [isSubmitting, setIsSubmitting] = useState(false);
 	const [isSubmitted, setIsSubmitted] = useState(false);
 	const [error, setError] = useState("");
+	const [signupCount] = useState(47); // Social proof counter
 
 	const handleSubmit = async (e: React.FormEvent) => {
 		e.preventDefault();
 		setIsSubmitting(true);
 		setError("");
 
-		// Combine role and pain point into feedback field
-		const feedback = [
-			role && `Role: ${role}`,
-			painPoint && `Pain point: ${painPoint}`,
-		]
-			.filter(Boolean)
-			.join(" | ");
-
-		const result = await joinWaitlist(email, feedback || undefined);
+		const result = await joinWaitlist(email, undefined);
 
 		if (result.success) {
 			setIsSubmitted(true);
 			setEmail("");
-			setRole("");
-			setPainPoint("");
 		} else {
 			setError(result.error || "Something went wrong");
 		}
@@ -52,86 +41,80 @@ export default function Home() {
 			</nav>
 
 			{/* Hero Section */}
-			<section className="px-6 pt-20 pb-32">
-				<div className="mx-auto max-w-4xl text-center">
-					<div className="mb-6 inline-flex items-center gap-2 rounded-full bg-white/10 px-4 py-2 text-sm text-white/90 backdrop-blur-sm">
+			<section className="px-6 pt-12 pb-20">
+				<div className="mx-auto max-w-3xl text-center">
+					<div className="mb-4 inline-flex items-center gap-2 rounded-full bg-white/10 px-4 py-2 text-sm text-white/90 backdrop-blur-sm">
 						<Sparkles className="h-4 w-4" />
 						<span>For Independent Filmmakers</span>
 					</div>
 
-					<h1 className="mb-6 font-extrabold text-5xl text-white leading-tight md:text-7xl">
-						Collaborate on Films
+					<h1 className="mb-4 font-extrabold text-5xl text-white leading-tight md:text-6xl">
+						Find Film Crew
 						<br />
 						<span className="bg-gradient-to-r from-pink-400 to-purple-400 bg-clip-text text-transparent">
-							With Anyone, Anywhere
+							From Anywhere
 						</span>
 					</h1>
 
-					<p className="mx-auto mb-12 max-w-3xl text-white/80 text-xl leading-relaxed md:text-2xl">
-						Find crew and collaborators from anywhere. Shoot locally, work on
-						post remotely. Get everyone properly credited. Built for indie
-						filmmakers.
+					<p className="mx-auto mb-8 max-w-2xl text-lg text-white/80 leading-relaxed md:text-xl">
+						Connect with editors, sound designers, and cinematographers
+						globally.
+						<strong className="text-white">
+							{" "}
+							Shoot local. Work remote. Get everyone credited.
+						</strong>
 					</p>
 
 					{!isSubmitted ? (
-						<form
-							id="signup-form"
-							onSubmit={handleSubmit}
-							className="mx-auto max-w-xl"
-						>
-							<div className="mb-4">
-								<input
-									id="email-input"
-									type="email"
-									value={email}
-									onChange={(e) => setEmail(e.target.value)}
-									placeholder="Your email"
-									required
-									className="w-full rounded-lg bg-white/95 px-6 py-4 text-gray-900 text-lg placeholder:text-gray-500 focus:outline-none focus:ring-4 focus:ring-purple-400/50"
-								/>
+						<>
+							<div className="mb-6 flex items-center justify-center gap-2 text-sm text-white/70">
+								<Users className="h-4 w-4" />
+								<span>{signupCount} filmmakers waiting for launch</span>
 							</div>
-							<div className="mb-4">
-								<input
-									type="text"
-									value={role}
-									onChange={(e) => setRole(e.target.value)}
-									placeholder="Your role (e.g., Director, Editor, Writer)"
-									className="w-full rounded-lg bg-white/95 px-6 py-4 text-base text-gray-900 placeholder:text-gray-500 focus:outline-none focus:ring-4 focus:ring-purple-400/50"
-								/>
-							</div>
-							<div className="mb-6">
-								<input
-									type="text"
-									value={painPoint}
-									onChange={(e) => setPainPoint(e.target.value)}
-									placeholder="Biggest challenge with remote film collaboration?"
-									className="w-full rounded-lg bg-white/95 px-6 py-4 text-base text-gray-900 placeholder:text-gray-500 focus:outline-none focus:ring-4 focus:ring-purple-400/50"
-								/>
-							</div>
-							<button
-								type="submit"
-								disabled={isSubmitting}
-								className="flex w-full items-center justify-center gap-2 rounded-lg bg-gradient-to-r from-pink-500 to-purple-600 px-8 py-4 font-bold text-lg text-white shadow-xl transition-all hover:scale-105 hover:from-pink-600 hover:to-purple-700 hover:shadow-2xl disabled:cursor-not-allowed disabled:opacity-50"
+							<form
+								id="signup-form"
+								onSubmit={handleSubmit}
+								className="mx-auto max-w-md"
 							>
-								{isSubmitting ? (
-									"Joining..."
-								) : (
-									<>
-										Join the Waitlist
-										<ArrowRight className="h-5 w-5" />
-									</>
-								)}
-							</button>
-							{error && <p className="mt-4 text-red-300 text-sm">{error}</p>}
-						</form>
+								<div className="flex flex-col gap-3 sm:flex-row">
+									<input
+										id="email-input"
+										type="email"
+										value={email}
+										onChange={(e) => setEmail(e.target.value)}
+										placeholder="your@email.com"
+										required
+										className="flex-1 rounded-lg bg-white/95 px-5 py-4 text-base text-gray-900 placeholder:text-gray-500 focus:outline-none focus:ring-4 focus:ring-purple-400/50"
+									/>
+									<button
+										type="submit"
+										disabled={isSubmitting}
+										className="flex items-center justify-center gap-2 whitespace-nowrap rounded-lg bg-gradient-to-r from-pink-500 to-purple-600 px-6 py-4 font-bold text-base text-white shadow-xl transition-all hover:scale-105 hover:from-pink-600 hover:to-purple-700 disabled:cursor-not-allowed disabled:opacity-50 sm:px-8"
+									>
+										{isSubmitting ? (
+											"Joining..."
+										) : (
+											<>
+												Get Early Access
+												<ArrowRight className="h-4 w-4" />
+											</>
+										)}
+									</button>
+								</div>
+								{error && <p className="mt-3 text-red-300 text-sm">{error}</p>}
+								<p className="mt-3 text-white/60 text-xs">
+									Join the waitlist • Be first to know when we launch
+								</p>
+							</form>
+						</>
 					) : (
-						<div className="mx-auto max-w-xl rounded-2xl border border-white/20 bg-white/10 p-8 backdrop-blur-sm">
-							<CheckCircle className="mx-auto mb-4 h-16 w-16 text-green-400" />
-							<h3 className="mb-2 font-bold text-2xl text-white">
-								You're on the list! 🎬
+						<div className="mx-auto max-w-md rounded-2xl border border-white/20 bg-white/10 p-8 backdrop-blur-sm">
+							<CheckCircle className="mx-auto mb-4 h-12 w-12 text-green-400" />
+							<h3 className="mb-2 font-bold text-white text-xl">
+								You're in! 🎬
 							</h3>
 							<p className="text-white/80">
-								We'll email you when we launch. Thanks for your interest!
+								We'll email you when Cresp launches. Thanks for joining!
 							</p>
 						</div>
 					)}
@@ -139,156 +122,99 @@ export default function Home() {
 			</section>
 
 			{/* Stats / Social Proof */}
-			<section className="mt-10 border-white/10 border-y bg-black/20 px-6 py-16">
+			<section className="border-white/10 border-y bg-black/20 px-6 py-12">
 				<div className="mx-auto max-w-5xl">
-					<div className="grid grid-cols-2 gap-8 md:grid-cols-4">
+					<div className="grid grid-cols-2 gap-6 md:grid-cols-4">
 						<div className="text-center">
-							<div className="mb-2 font-bold text-4xl text-white">Global</div>
+							<div className="mb-1 font-bold text-3xl text-white">Global</div>
 							<div className="text-sm text-white/60">Find Crew Anywhere</div>
 						</div>
 						<div className="text-center">
-							<div className="mb-2 font-bold text-4xl text-white">Track</div>
+							<div className="mb-1 font-bold text-3xl text-white">Track</div>
 							<div className="text-sm text-white/60">Every Contribution</div>
 						</div>
 						<div className="text-center">
-							<div className="mb-2 font-bold text-4xl text-white">Credit</div>
-							<div className="text-sm text-white/60">
-								Everyone Gets Recognized
-							</div>
+							<div className="mb-1 font-bold text-3xl text-white">Credit</div>
+							<div className="text-sm text-white/60">Everyone Recognized</div>
 						</div>
 						<div className="text-center">
-							<div className="mb-2 font-bold text-4xl text-white">Free</div>
+							<div className="mb-1 font-bold text-3xl text-white">Free</div>
 							<div className="text-sm text-white/60">No Cost to Use</div>
 						</div>
 					</div>
 				</div>
 			</section>
 
+			{/* The Problem Section */}
+			<section className="px-6 py-16">
+				<div className="mx-auto max-w-3xl">
+					<div className="rounded-2xl border border-white/20 bg-gradient-to-br from-pink-500/20 to-purple-500/20 p-8 backdrop-blur-sm md:p-10">
+						<h2 className="mb-4 text-center font-bold text-2xl text-white md:text-3xl">
+							You Have Ideas. You Need People.
+						</h2>
+						<p className="mx-auto mb-4 max-w-xl text-center text-white/80 leading-relaxed">
+							Making films usually means working with people you already know.
+							<strong className="text-white">
+								{" "}
+								But what if you could find crew from anywhere?
+							</strong>
+						</p>
+						<p className="mx-auto max-w-xl text-center text-white/80 leading-relaxed">
+							Editors in Berlin. Sound designers in Toronto. Cinematographers in
+							LA. Cresp helps indie filmmakers find each other and create things
+							they couldn't make alone.
+						</p>
+					</div>
+				</div>
+			</section>
+
 			{/* How It Works */}
-			<section className="bg-black/20 px-6 py-20">
-				<div className="mx-auto max-w-6xl">
-					<h2 className="mb-16 text-center font-bold text-4xl text-white md:text-5xl">
+			<section className="bg-black/20 px-6 py-16">
+				<div className="mx-auto max-w-5xl">
+					<h2 className="mb-10 text-center font-bold text-3xl text-white md:text-4xl">
 						How It Works
 					</h2>
 
-					<div className="grid gap-8 md:grid-cols-3">
+					<div className="grid gap-6 md:grid-cols-3">
 						{/* Step 1 */}
-						<div className="rounded-2xl border border-white/10 bg-white/5 p-8 backdrop-blur-sm transition-all hover:bg-white/10">
-							<div className="mb-4 flex h-12 w-12 items-center justify-center rounded-full bg-gradient-to-br from-pink-500 to-purple-600 font-bold text-white text-xl">
+						<div className="rounded-xl border border-white/10 bg-white/5 p-6 backdrop-blur-sm transition-all hover:bg-white/10">
+							<div className="mb-3 flex h-10 w-10 items-center justify-center rounded-full bg-gradient-to-br from-pink-500 to-purple-600 font-bold text-lg text-white">
 								1
 							</div>
-							<h3 className="mb-4 font-bold text-2xl text-white">
+							<h3 className="mb-2 font-bold text-lg text-white">
 								Post Your Project
 							</h3>
-							<p className="text-white/70 leading-relaxed">
-								Describe your film idea and what roles you need. Short film,
-								documentary, music video—whatever you're making.
+							<p className="text-sm text-white/70 leading-relaxed">
+								Describe your film and what roles you need. Short, doc, music
+								video—whatever you're making.
 							</p>
 						</div>
 
 						{/* Step 2 */}
-						<div className="rounded-2xl border border-white/10 bg-white/5 p-8 backdrop-blur-sm transition-all hover:bg-white/10">
-							<div className="mb-4 flex h-12 w-12 items-center justify-center rounded-full bg-gradient-to-br from-purple-500 to-indigo-600 font-bold text-white text-xl">
+						<div className="rounded-xl border border-white/10 bg-white/5 p-6 backdrop-blur-sm transition-all hover:bg-white/10">
+							<div className="mb-3 flex h-10 w-10 items-center justify-center rounded-full bg-gradient-to-br from-purple-500 to-indigo-600 font-bold text-lg text-white">
 								2
 							</div>
-							<h3 className="mb-4 font-bold text-2xl text-white">
+							<h3 className="mb-2 font-bold text-lg text-white">
 								Find Collaborators
 							</h3>
-							<p className="text-white/70 leading-relaxed">
-								People with the skills you need can find your project and join.
-								Writers, editors, sound designers, cinematographers—build your
-								crew.
+							<p className="text-sm text-white/70 leading-relaxed">
+								People with the skills you need find your project and join.
+								Build your crew from anywhere.
 							</p>
 						</div>
 
 						{/* Step 3 */}
-						<div className="rounded-2xl border border-white/10 bg-white/5 p-8 backdrop-blur-sm transition-all hover:bg-white/10">
-							<div className="mb-4 flex h-12 w-12 items-center justify-center rounded-full bg-gradient-to-br from-indigo-500 to-blue-600 font-bold text-white text-xl">
+						<div className="rounded-xl border border-white/10 bg-white/5 p-6 backdrop-blur-sm transition-all hover:bg-white/10">
+							<div className="mb-3 flex h-10 w-10 items-center justify-center rounded-full bg-gradient-to-br from-indigo-500 to-blue-600 font-bold text-lg text-white">
 								3
 							</div>
-							<h3 className="mb-4 font-bold text-2xl text-white">
-								Work Together & Get Credited
+							<h3 className="mb-2 font-bold text-lg text-white">
+								Work & Get Credited
 							</h3>
-							<p className="text-white/70 leading-relaxed">
-								Contributions are tracked so everyone gets proper credit. Work
-								is preserved even if people leave. Everything is transparent.
-							</p>
-						</div>
-					</div>
-				</div>
-			</section>
-
-			{/* The Problem Section */}
-			<section className="px-6 py-20">
-				<div className="mx-auto max-w-4xl">
-					<div className="rounded-3xl border border-white/20 bg-gradient-to-br from-pink-500/20 to-purple-500/20 p-12 backdrop-blur-sm">
-						<h2 className="mb-6 text-center font-bold text-3xl text-white md:text-4xl">
-							You Have Ideas. <br />
-							You Need People.
-						</h2>
-						<p className="mx-auto mb-6 max-w-2xl text-center text-lg text-white/80 leading-relaxed">
-							Making films usually means working with people you already know.
-							But what if you could find crew from anywhere—editors in Berlin,
-							sound designers in Toronto, cinematographers in LA?
-						</p>
-						<p className="mx-auto max-w-2xl text-center text-lg text-white/80 leading-relaxed">
-							Cresp helps indie filmmakers find each other, coordinate across
-							locations, and create things they couldn't make alone.
-						</p>
-					</div>
-				</div>
-			</section>
-
-			{/* Features Preview */}
-			<section className="bg-black/20 px-6 py-20">
-				<div className="mx-auto max-w-6xl">
-					<h2 className="mb-16 text-center font-bold text-4xl text-white md:text-5xl">
-						What Makes Cresp Different
-					</h2>
-
-					<div className="grid gap-8 md:grid-cols-2">
-						<div className="rounded-2xl border border-white/10 bg-gradient-to-br from-white/5 to-white/10 p-8 backdrop-blur-sm">
-							<Users className="mb-4 h-12 w-12 text-purple-400" />
-							<h3 className="mb-3 font-bold text-white text-xl">
-								Find People Anywhere
-							</h3>
-							<p className="text-white/70">
-								Connect with filmmakers from around the world. You shoot
-								locally, but can find editors, sound designers, and crew from
-								anywhere.
-							</p>
-						</div>
-
-						<div className="rounded-2xl border border-white/10 bg-gradient-to-br from-white/5 to-white/10 p-8 backdrop-blur-sm">
-							<CheckCircle className="mb-4 h-12 w-12 text-green-400" />
-							<h3 className="mb-3 font-bold text-white text-xl">
-								Track Contributions
-							</h3>
-							<p className="text-white/70">
-								See who contributed what and when. No more disputes about
-								credit. Everyone's work is visible and timestamped.
-							</p>
-						</div>
-
-						<div className="rounded-2xl border border-white/10 bg-gradient-to-br from-white/5 to-white/10 p-8 backdrop-blur-sm">
-							<Film className="mb-4 h-12 w-12 text-pink-400" />
-							<h3 className="mb-3 font-bold text-white text-xl">
-								Built for Films
-							</h3>
-							<p className="text-white/70">
-								Not generic project management. Designed for how films actually
-								get made—roles, milestones, revisions, and credits.
-							</p>
-						</div>
-
-						<div className="rounded-2xl border border-white/10 bg-gradient-to-br from-white/5 to-white/10 p-8 backdrop-blur-sm">
-							<Sparkles className="mb-4 h-12 w-12 text-yellow-400" />
-							<h3 className="mb-3 font-bold text-white text-xl">
-								You Own Your Work
-							</h3>
-							<p className="text-white/70">
-								The platform doesn't own your film. You do. We just help you
-								coordinate and make sure everyone gets proper credit.
+							<p className="text-sm text-white/70 leading-relaxed">
+								Contributions tracked, everyone credited. Work preserved even if
+								people leave.
 							</p>
 						</div>
 					</div>
@@ -296,85 +222,99 @@ export default function Home() {
 			</section>
 
 			{/* Use Case Example */}
-			<section className="px-6 py-20">
-				<div className="mx-auto max-w-5xl">
-					<h2 className="mb-12 text-center font-bold text-4xl text-white md:text-5xl">
-						How It Could Work
+			<section className="px-6 py-16">
+				<div className="mx-auto max-w-4xl">
+					<h2 className="mb-8 text-center font-bold text-3xl text-white md:text-4xl">
+						Real Example: "The Last Train"
 					</h2>
 
-					<div className="rounded-3xl border border-white/20 bg-black/30 p-8 backdrop-blur-sm md:p-12">
-						<div className="mb-8">
-							<div className="mb-3 inline-block rounded-full bg-pink-500/20 px-4 py-1 font-medium text-pink-300 text-sm">
-								Example Project
-							</div>
-							<h3 className="mb-4 font-bold text-2xl text-white md:text-3xl">
-								"The Last Train" - A 10-minute Short Film
+					<div className="rounded-2xl border border-white/20 bg-black/30 p-6 backdrop-blur-sm md:p-8">
+						<div className="mb-6">
+							<h3 className="mb-2 font-bold text-white text-xl md:text-2xl">
+								10-minute sci-fi short about a time loop
 							</h3>
-							<p className="text-lg text-white/70">
-								A sci-fi thriller about a subway passenger who discovers they're
-								trapped in a time loop.
+							<p className="text-white/70">
+								Sarah (Director in NYC) needs crew
 							</p>
 						</div>
 
-						<div className="grid gap-6 md:grid-cols-2">
-							<div className="rounded-xl border border-white/10 bg-white/5 p-6">
-								<h4 className="mb-4 font-semibold text-lg text-white">
-									What Sarah (Director) Posts:
+						<div className="grid gap-4 md:grid-cols-2">
+							<div className="rounded-lg border border-white/10 bg-white/5 p-5">
+								<h4 className="mb-3 font-semibold text-white">
+									What She Posts:
 								</h4>
-								<ul className="space-y-2 text-white/70">
-									<li className="flex items-start gap-2">
-										<span className="mt-1 text-pink-400">•</span>
-										<span>Script is finished, need crew</span>
-									</li>
-									<li className="flex items-start gap-2">
-										<span className="mt-1 text-pink-400">•</span>
-										<span>
-											Looking for: Cinematographer, Editor, Sound Designer
-										</span>
-									</li>
-									<li className="flex items-start gap-2">
-										<span className="mt-1 text-pink-400">•</span>
-										<span>Timeline: 3 months from pre to post</span>
-									</li>
-									<li className="flex items-start gap-2">
-										<span className="mt-1 text-pink-400">•</span>
-										<span>2 days shooting in NYC, post-production remote</span>
-									</li>
+								<ul className="space-y-1.5 text-sm text-white/70">
+									<li>• Script done, need: Editor, Sound, Color</li>
+									<li>• Timeline: 3 months pre to post</li>
+									<li>• 2 days shoot NYC, post remote</li>
 								</ul>
 							</div>
 
-							<div className="rounded-xl border border-white/10 bg-white/5 p-6">
-								<h4 className="mb-4 font-semibold text-lg text-white">
-									Who Joins:
-								</h4>
-								<ul className="space-y-2 text-white/70">
-									<li className="flex items-start gap-2">
-										<span className="mt-1 text-purple-400">•</span>
-										<span>
-											Mike (Cinematographer) from LA - has shot 5 shorts
-										</span>
-									</li>
-									<li className="flex items-start gap-2">
-										<span className="mt-1 text-purple-400">•</span>
-										<span>
-											Elena (Editor) from Berlin - specializes in sci-fi
-										</span>
-									</li>
-									<li className="flex items-start gap-2">
-										<span className="mt-1 text-purple-400">•</span>
-										<span>
-											James (Sound) from Toronto - has festival credits
-										</span>
-									</li>
+							<div className="rounded-lg border border-white/10 bg-white/5 p-5">
+								<h4 className="mb-3 font-semibold text-white">Who Joins:</h4>
+								<ul className="space-y-1.5 text-sm text-white/70">
+									<li>• Mike (Cinematographer) - LA</li>
+									<li>• Elena (Editor) - Berlin</li>
+									<li>• James (Sound) - Toronto</li>
 								</ul>
 							</div>
 						</div>
 
-						<div className="mt-6 rounded-xl border border-white/20 bg-gradient-to-r from-pink-500/20 to-purple-500/20 p-6">
-							<p className="text-center text-lg text-white/90">
-								3 months later: Film is complete. Everyone gets credited. Sarah
-								uploads it to festivals. The team can point to their work in
-								their portfolio.
+						<div className="mt-4 rounded-lg border border-white/20 bg-gradient-to-r from-pink-500/20 to-purple-500/20 p-4">
+							<p className="text-center text-sm text-white/90">
+								<strong>3 months later:</strong> Film complete. Everyone
+								credited. Sarah submits to festivals. Team adds it to
+								portfolios.
+							</p>
+						</div>
+					</div>
+				</div>
+			</section>
+
+			{/* Features Preview */}
+			<section className="bg-black/20 px-6 py-16">
+				<div className="mx-auto max-w-5xl">
+					<h2 className="mb-10 text-center font-bold text-3xl text-white md:text-4xl">
+						Why Cresp?
+					</h2>
+
+					<div className="grid gap-6 md:grid-cols-2">
+						<div className="rounded-xl border border-white/10 bg-gradient-to-br from-white/5 to-white/10 p-6 backdrop-blur-sm">
+							<Users className="mb-3 h-10 w-10 text-purple-400" />
+							<h3 className="mb-2 font-bold text-white">Find Crew Globally</h3>
+							<p className="text-sm text-white/70">
+								Not limited to your city. Connect with skilled filmmakers
+								worldwide.
+							</p>
+						</div>
+
+						<div className="rounded-xl border border-white/10 bg-gradient-to-br from-white/5 to-white/10 p-6 backdrop-blur-sm">
+							<CheckCircle className="mb-3 h-10 w-10 text-green-400" />
+							<h3 className="mb-2 font-bold text-white">
+								Proper Credit Tracking
+							</h3>
+							<p className="text-sm text-white/70">
+								Every contribution timestamped. No disputes. Everyone gets
+								recognized.
+							</p>
+						</div>
+
+						<div className="rounded-xl border border-white/10 bg-gradient-to-br from-white/5 to-white/10 p-6 backdrop-blur-sm">
+							<Film className="mb-3 h-10 w-10 text-pink-400" />
+							<h3 className="mb-2 font-bold text-white">
+								Built for Filmmaking
+							</h3>
+							<p className="text-sm text-white/70">
+								Not generic PM tools. Designed for roles, milestones, revisions,
+								credits.
+							</p>
+						</div>
+
+						<div className="rounded-xl border border-white/10 bg-gradient-to-br from-white/5 to-white/10 p-6 backdrop-blur-sm">
+							<Sparkles className="mb-3 h-10 w-10 text-yellow-400" />
+							<h3 className="mb-2 font-bold text-white">You Own Your Work</h3>
+							<p className="text-sm text-white/70">
+								Platform doesn't own your film. We coordinate, you keep rights.
 							</p>
 						</div>
 					</div>
@@ -382,14 +322,13 @@ export default function Home() {
 			</section>
 
 			{/* Final CTA */}
-			<section className="px-6 py-32">
-				<div className="mx-auto max-w-3xl text-center">
-					<h2 className="mb-6 font-bold text-4xl text-white md:text-5xl">
-						Want to Try This?
+			<section className="px-6 py-20">
+				<div className="mx-auto max-w-2xl text-center">
+					<h2 className="mb-4 font-bold text-3xl text-white md:text-4xl">
+						Ready to Find Your Crew?
 					</h2>
-					<p className="mb-12 text-white/80 text-xl">
-						We're building Cresp now. Join the waitlist to be notified when we
-						launch.
+					<p className="mb-8 text-lg text-white/80">
+						Join {signupCount} filmmakers waiting for launch.
 					</p>
 
 					{!isSubmitted && (
@@ -400,14 +339,13 @@ export default function Home() {
 									behavior: "smooth",
 									block: "center",
 								});
-								// Focus the email input after scroll
 								setTimeout(() => {
 									document.getElementById("email-input")?.focus();
 								}, 500);
 							}}
-							className="inline-flex items-center gap-2 rounded-lg bg-gradient-to-r from-pink-500 to-purple-600 px-8 py-4 font-bold text-lg text-white shadow-xl transition-all hover:scale-105 hover:from-pink-600 hover:to-purple-700 hover:shadow-2xl"
+							className="inline-flex items-center gap-2 rounded-lg bg-gradient-to-r from-pink-500 to-purple-600 px-8 py-4 font-bold text-lg text-white shadow-xl transition-all hover:scale-105 hover:from-pink-600 hover:to-purple-700"
 						>
-							Join the Waitlist
+							Get Early Access
 							<ArrowRight className="h-5 w-5" />
 						</button>
 					)}
@@ -415,7 +353,7 @@ export default function Home() {
 			</section>
 
 			{/* Footer */}
-			<footer className="border-white/10 border-t px-6 py-8">
+			<footer className="border-white/10 border-t px-6 py-6">
 				<div className="mx-auto max-w-7xl text-center text-sm text-white/60">
 					<p>© 2025 Cresp. Built for independent filmmakers.</p>
 				</div>
