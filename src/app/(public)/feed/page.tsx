@@ -85,7 +85,7 @@ export default async function PublicFeedPage({
 	// Determine sort order based on query params
 	const sortBy = searchParams.sortBy || "latest";
 	let orderBy: Prisma.PostOrderByWithRelationInput;
-	
+
 	switch (sortBy) {
 		case "popular":
 			orderBy = { likeCount: "desc" };
@@ -142,10 +142,10 @@ export default async function PublicFeedPage({
 
 	return (
 		<PullToRefreshWrapper>
-			<div className="lg:grid lg:gap-6 lg:grid-cols-12">
+			<div className="lg:grid lg:grid-cols-12 lg:gap-6">
 				{/* Left Sidebar - User Info (only for logged-in users on desktop) */}
 				{fullUser && (
-					<aside className="hidden lg:block lg:col-span-3">
+					<aside className="hidden lg:col-span-3 lg:block">
 						<div className="sticky top-6 space-y-4">
 							<UserQuickCard user={fullUser} />
 						</div>
@@ -173,7 +173,7 @@ export default async function PublicFeedPage({
 				</main>
 
 				{/* Right Sidebar - Trending/Suggestions (Sticky, desktop only) */}
-				<aside className="hidden lg:block lg:col-span-3">
+				<aside className="hidden lg:col-span-3 lg:block">
 					<div className="sticky top-6 space-y-4">
 						<TrendingCard />
 						<AboutCard />
@@ -428,12 +428,14 @@ function CreatePostCard() {
 				{/* Fake Input - Takes remaining space */}
 				<div className="min-w-0 flex-1">
 					<div className="cursor-pointer rounded-full border-2 border-gray-200 bg-gray-50 px-3 py-2 text-left text-gray-500 transition-all group-hover:border-purple-400 group-hover:bg-purple-50 group-hover:text-gray-700 sm:px-5 sm:py-3">
-						<span className="text-sm sm:text-base">What do you want to share today?</span>
+						<span className="text-sm sm:text-base">
+							What do you want to share today?
+						</span>
 					</div>
 				</div>
 
 				{/* Action Button - Hidden on very small screens */}
-				<div className="hidden flex-shrink-0 xs:block">
+				<div className="xs:block hidden flex-shrink-0">
 					<div className="rounded-lg bg-purple-600 px-3 py-2 font-medium text-sm text-white transition-colors group-hover:bg-purple-700 sm:px-5 sm:py-2.5">
 						Post
 					</div>
@@ -476,5 +478,3 @@ function SortFilter({ currentSort }: { currentSort: string }) {
 		</div>
 	);
 }
-
-

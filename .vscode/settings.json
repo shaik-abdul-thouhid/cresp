@@ -10,6 +10,8 @@
 	"editor.formatOnSave": true,
 	"typescript.preferences.preferTypeOnlyAutoImports": true,
 	"cSpell.words": [
-		"Dailymotion"
-	]
+		"Dailymotion",
+		"waitlist"
+	],
+	"postman.settings.dotenv-detection-notification-visibility": false
 }

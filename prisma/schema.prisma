@@ -997,3 +997,27 @@ model FeedbackPromptLog {
     @@index([trigger])
     @@map("feedback_prompt_log")
 }
+
+// ============================================
+// 29. WAITLIST (Pre-launch email collection)
+// ============================================
+model Waitlist {
+    id String @id @default(cuid())
+
+    email    String  @unique
+    feedback String? @db.Text // Optional user feedback about what they want to see
+
+    // Metadata
+    source    String? // Where they signed up from (landing, reddit, twitter, etc.)
+    userAgent String? @map("user_agent") @db.Text
+    ipAddress String? @map("ip_address") // For deduplication
+
+    // Status
+    notified Boolean @default(false) // Whether we've notified them about launch
+
+    createdAt DateTime @default(now()) @map("created_at")
+
+    @@index([createdAt])
+    @@index([notified])
+    @@map("waitlist")
+}
