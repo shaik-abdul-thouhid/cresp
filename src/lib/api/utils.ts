@@ -17,7 +17,7 @@ export function errorResponse(
 export function validationErrorResponse(
 	error: ZodError
 ): NextResponse<{ error: string }> {
-	const message = error.errors[0]?.message || "Invalid input";
+	const message = error.issues[0]?.message || "Invalid input";
 	return errorResponse(message, 400);
 }
 

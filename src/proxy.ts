@@ -2,8 +2,7 @@ import type { NextRequest } from "next/server";
 import { NextResponse } from "next/server";
 import { verifyToken } from "~/lib/auth/jwt";
 
-// Force Node.js runtime for middleware (required for jsonwebtoken)
-export const runtime = "nodejs";
+// Middleware runs on Node.js runtime by default (required for jsonwebtoken)
 
 const PROTECTED_API_ROUTES = [
 	"/api/user/",
@@ -16,7 +15,7 @@ const PROTECTED_API_ROUTES = [
 	"/api/feedback/",
 ] as const;
 
-export function middleware(request: NextRequest) {
+export function proxy(request: NextRequest) {
 	const { pathname } = request.nextUrl;
 
 	const isProtectedApi = PROTECTED_API_ROUTES.some((route) =>

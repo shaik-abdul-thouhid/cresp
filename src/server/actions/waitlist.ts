@@ -38,7 +38,7 @@ export async function joinWaitlist(email: string, feedback?: string) {
 		if (error instanceof z.ZodError) {
 			return {
 				success: false,
-				error: error.errors[0]?.message || "Invalid email",
+				error: error.issues[0]?.message || "Invalid email",
 			};
 		}
 

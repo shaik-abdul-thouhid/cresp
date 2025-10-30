@@ -5,7 +5,7 @@ import Link from "next/link";
 import { PullToRefreshWrapper } from "~/components/pull-to-refresh-wrapper";
 import { getCurrentUser } from "~/lib/auth/get-user";
 import { db } from "~/server/db";
-import { FeedPostsList } from "./feed-posts-list";
+import { FeedPostsList } from "./_feed_posts_list";
 
 // OPTIMIZATION: Cache feed data for 1 minute
 // Reduces database load while keeping content relatively fresh
@@ -27,6 +27,7 @@ type PostWithRelations = Prisma.PostGetPayload<{
 				professionalRole: true;
 			};
 		};
+		portfolioDetails: true;
 		media: true;
 		hashtags: {
 			include: {
@@ -63,8 +64,16 @@ export default async function PublicFeedPage({
 					name: true,
 					image: true,
 					totalReputation: true,
-					portfolioPostCount: true,
-					casualPostCount: true,
+					_count: {
+						select: {
+							posts: {
+								where: {
+									deletedAt: null,
+									postType: "PORTFOLIO",
+								},
+							},
+						},
+					},
 					professionalRoles: {
 						select: {
 							isPrimary: true,
@@ -82,6 +91,36 @@ export default async function PublicFeedPage({
 			})
 		: null;
 
+	// Calculate post counts (excluding deleted posts)
+	const portfolioPostCount = currentUser
+		? await db.post.count({
+				where: {
+					userId: currentUser.userId,
+					postType: "PORTFOLIO",
+					deletedAt: null,
+				},
+			})
+		: 0;
+
+	const casualPostCount = currentUser
+		? await db.post.count({
+				where: {
+					userId: currentUser.userId,
+					postType: "CASUAL",
+					deletedAt: null,
+				},
+			})
+		: 0;
+
+	// Combine the user data with dynamic counts
+	const fullUserWithCounts = fullUser
+		? {
+				...fullUser,
+				portfolioPostCount,
+				casualPostCount,
+			}
+		: null;
+
 	// Determine sort order based on query params
 	const sortBy = searchParams.sortBy || "latest";
 	let orderBy: Prisma.PostOrderByWithRelationInput;
@@ -93,7 +132,6 @@ export default async function PublicFeedPage({
 		case "discussed":
 			orderBy = { commentCount: "desc" };
 			break;
-		case "latest":
 		default:
 			orderBy = { createdAt: "desc" };
 			break;
@@ -119,6 +157,7 @@ export default async function PublicFeedPage({
 					professionalRole: true,
 				},
 			},
+			portfolioDetails: true,
 			media: true,
 			hashtags: {
 				include: {
@@ -144,16 +183,18 @@ export default async function PublicFeedPage({
 		<PullToRefreshWrapper>
 			<div className="lg:grid lg:grid-cols-12 lg:gap-6">
 				{/* Left Sidebar - User Info (only for logged-in users on desktop) */}
-				{fullUser && (
+				{fullUserWithCounts && (
 					<aside className="hidden lg:col-span-3 lg:block">
 						<div className="sticky top-6 space-y-4">
-							<UserQuickCard user={fullUser} />
+							<UserQuickCard user={fullUserWithCounts} />
 						</div>
 					</aside>
 				)}
 
 				{/* Main Feed - Full width on mobile, centered column on desktop */}
-				<main className={fullUser ? "lg:col-span-6" : "lg:col-span-9"}>
+				<main
+					className={fullUserWithCounts ? "lg:col-span-6" : "lg:col-span-9"}
+				>
 					<div className="space-y-4">
 						{/* Create Post (logged-in users only) */}
 						{currentUser && <CreatePostCard />}
@@ -165,6 +206,7 @@ export default async function PublicFeedPage({
 						<FeedPostsList
 							posts={displayPosts}
 							isLoggedIn={!!currentUser}
+							currentUserId={currentUser?.userId}
 							highlightId={searchParams.highlight}
 							hasMore={hasMore}
 							sortBy={sortBy}

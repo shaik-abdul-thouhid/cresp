@@ -44,6 +44,30 @@ export const ActivityActions = {
 	POST_UNLIKE: "post.unlike",
 	POST_COMMENT: "post.comment",
 	POST_SHARE: "post.share",
+	POST_REPORT: "post.report",
+
+	// Portfolio Post actions
+	PORTFOLIO_CREATE: "portfolio.create",
+	PORTFOLIO_UPDATE: "portfolio.update",
+	PORTFOLIO_FEATURE: "portfolio.feature",
+	PORTFOLIO_HIGHLIGHT: "portfolio.highlight",
+
+	// Professional Role actions
+	PROFESSIONAL_ROLE_ADD: "professional_role.add",
+	PROFESSIONAL_ROLE_UPDATE: "professional_role.update",
+	PROFESSIONAL_ROLE_REMOVE: "professional_role.remove",
+	PROFESSIONAL_ROLE_SET_PRIMARY: "professional_role.set_primary",
+	PROFESSIONAL_ROLE_UPDATE_STATUS: "professional_role.update_status",
+
+	// User Report actions
+	USER_REPORT: "user.report",
+
+	// Collection actions
+	COLLECTION_CREATE: "collection.create",
+	COLLECTION_UPDATE: "collection.update",
+	COLLECTION_DELETE: "collection.delete",
+	COLLECTION_ADD_POST: "collection.add_post",
+	COLLECTION_REMOVE_POST: "collection.remove_post",
 
 	// Admin actions
 	ADMIN_ROLE_ASSIGN: "admin.role_assign",

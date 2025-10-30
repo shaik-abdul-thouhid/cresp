@@ -108,6 +108,38 @@ enum AchievementCategory {
     STREAK // Check via scheduled job (future)
 }
 
+// Professional Role Status
+enum ProfessionalRoleStatus {
+    ACTIVE // Currently practicing this role
+    LEARNING // Still learning/building skills
+    INACTIVE // No longer actively pursuing
+    PAST_EXPERIENCE // Previous role, not current
+}
+
+// Portfolio Project Status
+enum ProjectStatus {
+    COMPLETED
+    ONGOING
+    CONCEPT
+}
+
+// Portfolio Project Scale
+enum ProjectScale {
+    SMALL
+    MEDIUM
+    LARGE
+    ENTERPRISE
+}
+
+// Portfolio Client Type
+enum ClientType {
+    PERSONAL
+    FREELANCE
+    AGENCY
+    COMPANY
+    OPEN_SOURCE
+}
+
 // ============================================
 // 1. USER & PROFILE
 // ============================================
@@ -162,6 +194,8 @@ model User {
     moderationReports    ModerationReport[] @relation("ModerationReporter")
     moderationQueueOwner ModerationQueue[]  @relation("PostOwner")
     moderationReviewer   ModerationQueue[]  @relation("Moderator")
+    userReportsReceived  UserReport[]       @relation("ReportedUser")
+    userReportsFiled     UserReport[]       @relation("UserReporter")
 
     // Rate Limiting
     rateLimit UserPostRateLimit?
@@ -318,6 +352,9 @@ model UserProfessionalRole {
     isPrimary          Boolean @default(false) @map("is_primary")
     yearsExperience    Int?    @map("years_experience")
 
+    // Role status
+    status ProfessionalRoleStatus @default(ACTIVE)
+
     // Per-role reputation
     reputationPoints   Int @default(0) @map("reputation_points")
     portfolioPostCount Int @default(0) @map("portfolio_post_count")
@@ -332,6 +369,7 @@ model UserProfessionalRole {
     @@index([userId])
     @@index([professionalRoleId])
     @@index([reputationPoints])
+    @@index([status])
     @@map("user_professional_roles")
 }
 
@@ -376,11 +414,93 @@ model Post {
     privacy           PostPrivacy?
     analytics         PostAnalytics?
     collectionPosts   CollectionPost[]
+    portfolioDetails  PortfolioPost?
 
     @@index([userId, createdAt])
     @@index([status, publishedAt])
     @@index([postType, status, publishedAt])
     @@map("posts")
+}
+
+// ============================================
+// 5A. PORTFOLIO POST DETAILS
+// ============================================
+model PortfolioPost {
+    id     String @id @default(cuid())
+    postId String @unique @map("post_id")
+
+    // Project Identity
+    projectTitle  String        @map("project_title")
+    projectType   String?       @map("project_type") // "Web App", "Mobile App", "Design", etc.
+    projectStatus ProjectStatus @default(COMPLETED) @map("project_status")
+
+    // Timeline
+    startDate DateTime? @map("start_date")
+    endDate   DateTime? @map("end_date")
+    duration  String? // "3 months", "6 weeks", etc.
+
+    // Role & Team
+    userRole         String   @map("user_role") // "Lead Designer", "Full-Stack Developer", etc.
+    teamSize         Int?     @map("team_size")
+    isTeamProject    Boolean  @default(false) @map("is_team_project")
+    responsibilities String[] // ["UI/UX Design", "Frontend Development", etc.]
+    keyContributions String?  @map("key_contributions") @db.Text
+
+    // Technical Stack
+    technologies String[] // ["React", "Node.js", "PostgreSQL", etc.]
+    tools        String[] // ["Figma", "VS Code", "Docker", etc.]
+    skills       String[] // Primary skills showcased
+
+    // Links & Resources
+    liveUrl       String? @map("live_url")
+    repositoryUrl String? @map("repository_url")
+    caseStudyUrl  String? @map("case_study_url")
+    externalLinks Json?   @map("external_links") // Array of {label, url}
+
+    // Project Story
+    problemStatement String? @map("problem_statement") @db.Text
+    solution         String? @db.Text
+    impact           String? @db.Text
+    challenges       String? @db.Text
+    lessonsLearned   String? @map("lessons_learned") @db.Text
+
+    // Results & Metrics
+    metrics Json? // Array of {metric, value, icon}
+
+    // Recognition
+    awards      String[] // Awards or recognition received
+    testimonial Json? // {text, author, role, image}
+
+    // Presentation
+    coverImageId String? @map("cover_image_id")
+    isFeatured   Boolean @default(false) @map("is_featured")
+    isHighlight  Boolean @default(false) @map("is_highlight")
+
+    // Classification
+    category       String? // "Web Development", "Graphic Design", etc.
+    industry       String? // "Healthcare", "E-commerce", "Education", etc.
+    targetAudience String?       @map("target_audience")
+    clientType     ClientType?   @map("client_type")
+    projectScale   ProjectScale? @map("project_scale")
+
+    // Client Information (optional)
+    clientName     String? @map("client_name")
+    clientIndustry String? @map("client_industry")
+
+    // Collaborators
+    collaborators Json? // Array of {userId?, name, role}
+
+    createdAt DateTime @default(now()) @map("created_at")
+    updatedAt DateTime @updatedAt @map("updated_at")
+
+    post Post @relation(fields: [postId], references: [id], onDelete: Cascade)
+
+    @@index([projectType])
+    @@index([projectStatus])
+    @@index([category])
+    @@index([isFeatured])
+    @@index([isHighlight])
+    @@map("portfolio_posts")
 }
 
 // ============================================
@@ -542,6 +662,36 @@ model CommentLike {
 // ============================================
 // 10. UNIFIED MODERATION SYSTEM (HYBRID: Flexible Categories + Fixed Workflow)
 // ============================================
+
+// User profile reports (for flagging inappropriate profiles)
+model UserReport {
+    id             String @id @default(cuid())
+    reportedUserId String @map("reported_user_id")
+    reportedBy     String @map("reported_by")
+
+    categoryKey String  @map("category_key") // Reference to ModerationCategory.key
+    reason      String? @db.Text
+
+    status   ModerationStatus   @default(PENDING)
+    priority ModerationPriority @default(NORMAL)
+
+    reviewedBy String?   @map("reviewed_by")
+    reviewedAt DateTime? @map("reviewed_at")
+    resolution String?   @db.Text
+
+    createdAt DateTime @default(now()) @map("created_at")
+    updatedAt DateTime @updatedAt @map("updated_at")
+
+    reportedUser User @relation("ReportedUser", fields: [reportedUserId], references: [id], onDelete: Cascade)
+    reporter     User @relation("UserReporter", fields: [reportedBy], references: [id], onDelete: Cascade)
+
+    @@unique([reportedUserId, reportedBy])
+    @@index([reportedUserId])
+    @@index([reportedBy])
+    @@index([categoryKey])
+    @@index([status, priority])
+    @@map("user_reports")
+}
 
 // Admin-configurable moderation categories
 model ModerationCategory {

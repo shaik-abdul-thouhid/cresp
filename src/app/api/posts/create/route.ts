@@ -106,6 +106,9 @@ export async function POST(req: NextRequest) {
 			);
 		}
 
+		// Extract portfolio details if this is a portfolio post
+		const portfolioData = body.portfolio;
+
 		// Create post with all relations in a transaction
 		const post = await db.$transaction(async (tx) => {
 			// 1. Create the post
@@ -129,6 +132,44 @@ export async function POST(req: NextRequest) {
 					canDownload: "CONNECTIONS",
 				},
 			});
+
+			// 2.5. Create portfolio details if this is a portfolio post
+			if (postType === "PORTFOLIO" && portfolioData) {
+				await tx.portfolioPost.create({
+					data: {
+						postId: newPost.id,
+						projectTitle: portfolioData.projectTitle,
+						projectType: portfolioData.projectType || null,
+						projectStatus:
+							portfolioData.projectStatus || "COMPLETED",
+						userRole: portfolioData.userRole,
+						startDate: portfolioData.startDate
+							? new Date(portfolioData.startDate)
+							: null,
+						endDate: portfolioData.endDate
+							? new Date(portfolioData.endDate)
+							: null,
+						duration: portfolioData.duration || null,
+						isTeamProject: portfolioData.isTeamProject || false,
+						teamSize: portfolioData.teamSize || null,
+						responsibilities: portfolioData.responsibilities || [],
+						keyContributions:
+							portfolioData.keyContributions || null,
+						technologies: portfolioData.technologies || [],
+						tools: portfolioData.tools || [],
+						skills: portfolioData.skills || [],
+						liveUrl: portfolioData.liveUrl || null,
+						repositoryUrl: portfolioData.repositoryUrl || null,
+						caseStudyUrl: portfolioData.caseStudyUrl || null,
+						problemStatement:
+							portfolioData.problemStatement || null,
+						solution: portfolioData.solution || null,
+						impact: portfolioData.impact || null,
+						challenges: portfolioData.challenges || null,
+						lessonsLearned: portfolioData.lessonsLearned || null,
+					},
+				});
+			}
 
 			// 3. Add professional roles (for portfolio posts)
 			if (professionalRoleIds && professionalRoleIds.length > 0) {

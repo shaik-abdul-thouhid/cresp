@@ -7,6 +7,9 @@ import "./src/env.js";
 
 /** @type {import("next").NextConfig} */
 const config = {
+	// Empty turbopack config to silence Next.js 16 webpack/turbopack warning
+	// next-pwa uses webpack config which conflicts with Turbopack
+	turbopack: {},
 	images: {
 		remotePatterns: [
 			{

@@ -1,6 +1,8 @@
 "use client";
 
+import type { User } from "@prisma/client";
 import {
+	AlertCircle,
 	ArrowLeft,
 	Briefcase,
 	Eye,
@@ -9,22 +11,49 @@ import {
 	Hash,
 	Image as ImageIcon,
 	Loader2,
+	Plus,
 	Sparkles,
 	Video,
 	X,
 } from "lucide-react";
 import Link from "next/link";
-import { useRouter } from "next/navigation";
-import { useState } from "react";
+import { useRouter, useSearchParams } from "next/navigation";
+import { useEffect, useState } from "react";
 import { toast } from "sonner";
 import { ErrorToast, SuccessToast } from "~/components/ui/custom-toasts";
 import { useFeedbackPrompt } from "~/hooks/use-feedback-prompt";
+import {
+	EssentialInfoSection,
+	ProjectLinksSection,
+	ProjectStorySection,
+	TeamCollaborationSection,
+	TechnicalDetailsSection,
+	TimelineSection,
+} from "./_form_sections";
 
 export default function CreatePostPage() {
 	const router = useRouter();
+	const searchParams = useSearchParams();
 	const { checkAndShowFeedback, FeedbackPrompt } = useFeedbackPrompt();
 	const [isSubmitting, setIsSubmitting] = useState(false);
-	const [postType, setPostType] = useState<"CASUAL" | "PORTFOLIO">("CASUAL");
+
+	// Initialize postType based on 'tab' or 'type' query parameter
+	const initialPostType = (() => {
+		const tabParam = searchParams.get("tab");
+		const typeParam = searchParams.get("type");
+
+		// Support both 'tab' and 'type' query parameters
+		const param = tabParam || typeParam;
+
+		if (param?.toLowerCase() === "portfolio") {
+			return "PORTFOLIO";
+		}
+		return "CASUAL";
+	})();
+
+	const [postType, setPostType] = useState<"CASUAL" | "PORTFOLIO">(
+		initialPostType,
+	);
 	const [content, setContent] = useState("");
 	const [isAiGenerated, setIsAiGenerated] = useState(false);
 	const [visibility, setVisibility] = useState<
@@ -60,6 +89,8 @@ export default function CreatePostPage() {
 	const [videoUrl, setVideoUrl] = useState("");
 	const [showVideoInput, setShowVideoInput] = useState(false);
 
+	const [currentUser, setCurrentUser] = useState<User | null>(null);
+
 	const [audios, setAudios] = useState<
 		Array<{
 			id: string;
@@ -75,12 +106,82 @@ export default function CreatePostPage() {
 	const [audioUrl, setAudioUrl] = useState("");
 	const [showAudioInput, setShowAudioInput] = useState(false);
 
-	// TODO: Fetch user's professional roles from API
-	const userRoles = [
-		{ id: "1", name: "Director", icon: Video },
-		{ id: "2", name: "Photographer", icon: ImageIcon },
-		{ id: "3", name: "Video Editor", icon: FileText },
-	];
+	// User's professional roles
+	const [userRoles, setUserRoles] = useState<
+		Array<{
+			id: string;
+			name: string;
+			icon: string | null;
+			key: string;
+			isPrimary: boolean;
+		}>
+	>([]);
+	const [isLoadingRoles, setIsLoadingRoles] = useState(true);
+
+	// Portfolio-specific fields
+	const [projectTitle, setProjectTitle] = useState("");
+	const [projectType, setProjectType] = useState("");
+	const [userRole, setUserRole] = useState("");
+	const [projectStatus, setProjectStatus] = useState<
+		"COMPLETED" | "ONGOING" | "CONCEPT"
+	>("COMPLETED");
+	const [startDate, setStartDate] = useState("");
+	const [endDate, setEndDate] = useState("");
+	const [duration, setDuration] = useState("");
+	const [isTeamProject, setIsTeamProject] = useState(false);
+	const [teamSize, setTeamSize] = useState("");
+	const [responsibilities, setResponsibilities] = useState<string[]>([]);
+	const [keyContributions, setKeyContributions] = useState("");
+	const [technologies, setTechnologies] = useState<string[]>([]);
+	const [tools, setTools] = useState<string[]>([]);
+	const [skills, setSkills] = useState<string[]>([]);
+	const [liveUrl, setLiveUrl] = useState("");
+	const [repositoryUrl, setRepositoryUrl] = useState("");
+	const [caseStudyUrl, setCaseStudyUrl] = useState("");
+	const [problemStatement, setProblemStatement] = useState("");
+	const [solution, setSolution] = useState("");
+	const [impact, setImpact] = useState("");
+	const [challenges, setChallenges] = useState("");
+	const [lessonsLearned, setLessonsLearned] = useState("");
+
+	// Fetch user's professional roles and user data
+	useEffect(() => {
+		async function fetchRoles() {
+			try {
+				setIsLoadingRoles(true);
+				const response = await fetch("/api/user/professional-roles");
+				const data = await response.json();
+
+				if (response.ok && data.roles) {
+					setUserRoles(data.roles);
+				} else {
+					console.error("Failed to fetch roles:", data.error);
+				}
+			} catch (error) {
+				console.error("Error fetching roles:", error);
+			} finally {
+				setIsLoadingRoles(false);
+			}
+		}
+
+		async function fetchUser() {
+			try {
+				const response = await fetch("/api/user/me");
+				const data = await response.json();
+
+				if (response.ok) {
+					setCurrentUser(data);
+				} else {
+					console.error("Failed to fetch user:", data.error);
+				}
+			} catch (error) {
+				console.error("Error fetching user:", error);
+			}
+		}
+
+		fetchRoles();
+		fetchUser();
+	}, []);
 
 	const handleHashtagAdd = (e: React.KeyboardEvent<HTMLInputElement>) => {
 		if (e.key === "Enter" || e.key === ",") {
@@ -199,12 +300,15 @@ export default function CreatePostPage() {
 			setVideoUrl("");
 			setShowVideoInput(false);
 		} else {
-			toast.custom(() => (
-				<ErrorToast
-					title="Invalid Video URL"
-					message="Please enter a valid URL from YouTube, Vimeo, TikTok, or Dailymotion"
-				/>
-			));
+			toast.custom(
+				() => (
+					<ErrorToast
+						title="Invalid Video URL"
+						message="Please enter a valid URL from YouTube, Vimeo, TikTok, or Dailymotion"
+					/>
+				),
+				{ duration: 5000 },
+			);
 		}
 	};
 
@@ -333,12 +437,15 @@ export default function CreatePostPage() {
 			setAudioUrl("");
 			setShowAudioInput(false);
 		} else {
-			toast.custom(() => (
-				<ErrorToast
-					title="Invalid Audio URL"
-					message="Please enter a valid URL from SoundCloud, Spotify, Bandcamp, or Apple Music"
-				/>
-			));
+			toast.custom(
+				() => (
+					<ErrorToast
+						title="Invalid Audio URL"
+						message="Please enter a valid URL from SoundCloud, Spotify, Bandcamp, or Apple Music"
+					/>
+				),
+				{ duration: 5000 },
+			);
 		}
 	};
 
@@ -465,24 +572,56 @@ export default function CreatePostPage() {
 			documents.length > 0;
 
 		if (!hasContent && !hasMedia) {
-			toast.custom(() => (
-				<ErrorToast
-					title="Empty Post"
-					message="Please add some content or media to your post"
-				/>
-			));
+			toast.custom(
+				() => (
+					<ErrorToast
+						title="Empty Post"
+						message="Please add some content or media to your post"
+					/>
+				),
+				{ duration: 5000 },
+			);
 			return;
 		}
 
 		// Validate portfolio requirements
-		if (postType === "PORTFOLIO" && selectedRoles.length === 0) {
-			toast.custom(() => (
-				<ErrorToast
-					title="Roles Required"
-					message="Please select at least one professional role for portfolio posts"
-				/>
-			));
-			return;
+		if (postType === "PORTFOLIO") {
+			if (selectedRoles.length === 0) {
+				toast.custom(
+					() => (
+						<ErrorToast
+							title="Roles Required"
+							message="Please select at least one professional role for portfolio posts"
+						/>
+					),
+					{ duration: 5000 },
+				);
+				return;
+			}
+			if (!projectTitle.trim()) {
+				toast.custom(
+					() => (
+						<ErrorToast
+							title="Work Title Required"
+							message="Please enter a title for your work"
+						/>
+					),
+					{ duration: 5000 },
+				);
+				return;
+			}
+			if (!userRole.trim()) {
+				toast.custom(
+					() => (
+						<ErrorToast
+							title="Your Role Required"
+							message="Please specify your role in creating this work"
+						/>
+					),
+					{ duration: 5000 },
+				);
+				return;
+			}
 		}
 
 		setIsSubmitting(true);
@@ -526,6 +665,37 @@ export default function CreatePostPage() {
 				documents: uploadedDocuments.length > 0 ? uploadedDocuments : undefined,
 				videos: videos.length > 0 ? videos : undefined,
 				audios: audios.length > 0 ? audios : undefined,
+				// Portfolio-specific data
+				...(postType === "PORTFOLIO" && {
+					portfolio: {
+						projectTitle: projectTitle.trim(),
+						projectType: projectType.trim() || undefined,
+						projectStatus,
+						userRole: userRole.trim(),
+						startDate: startDate
+							? new Date(startDate).toISOString()
+							: undefined,
+						endDate: endDate ? new Date(endDate).toISOString() : undefined,
+						duration: duration.trim() || undefined,
+						isTeamProject,
+						teamSize:
+							isTeamProject && teamSize ? Number.parseInt(teamSize) : undefined,
+						responsibilities:
+							responsibilities.length > 0 ? responsibilities : undefined,
+						keyContributions: keyContributions.trim() || undefined,
+						technologies: technologies.length > 0 ? technologies : undefined,
+						tools: tools.length > 0 ? tools : undefined,
+						skills: skills.length > 0 ? skills : undefined,
+						liveUrl: liveUrl.trim() || undefined,
+						repositoryUrl: repositoryUrl.trim() || undefined,
+						caseStudyUrl: caseStudyUrl.trim() || undefined,
+						problemStatement: problemStatement.trim() || undefined,
+						solution: solution.trim() || undefined,
+						impact: impact.trim() || undefined,
+						challenges: challenges.trim() || undefined,
+						lessonsLearned: lessonsLearned.trim() || undefined,
+					},
+				}),
 			};
 
 			const response = await fetch("/api/posts/create", {
@@ -542,19 +712,22 @@ export default function CreatePostPage() {
 			if (!response.ok) {
 				// Handle 401 specifically
 				if (response.status === 401) {
-					toast.custom(() => (
-						<ErrorToast
-							title="Session Expired"
-							message="Please log in again to continue"
-						/>
-					));
+					toast.custom(
+						() => (
+							<ErrorToast
+								title="Session Expired"
+								message="Please log in again to continue"
+							/>
+						),
+						{ duration: 5000 },
+					);
 					// Redirect to login after a short delay
 					setTimeout(() => {
 						window.location.href = `/login?returnUrl=${encodeURIComponent(window.location.pathname)}`;
 					}, 1500);
 					return;
 				}
-				
+
 				throw new Error(data.error || "Failed to create post");
 			}
 
@@ -567,17 +740,19 @@ export default function CreatePostPage() {
 			));
 
 			// Check if we should show feedback prompt (async, doesn't block redirect)
-			const isFirstPost = postType === "PORTFOLIO" 
-				? data.isFirstPortfolioPost 
-				: data.isFirstCasualPost;
+			const isFirstPost =
+				postType === "PORTFOLIO"
+					? data.isFirstPortfolioPost
+					: data.isFirstCasualPost;
 
 			if (isFirstPost) {
 				// Show feedback after a short delay
 				setTimeout(() => {
 					checkAndShowFeedback({
-						trigger: postType === "PORTFOLIO" 
-							? "first_portfolio_post" 
-							: "first_casual_post",
+						trigger:
+							postType === "PORTFOLIO"
+								? "first_portfolio_post"
+								: "first_casual_post",
 						feedbackType: "first_post",
 						title: `🎉 ${postType === "PORTFOLIO" ? "Portfolio" : "First"} Post Created!`,
 						question: "How was your posting experience?",
@@ -585,18 +760,23 @@ export default function CreatePostPage() {
 				}, 2000); // 2 seconds after success toast
 			}
 
-		// Redirect to feed with highlight
-		setTimeout(() => {
-			router.push(`/feed?highlight=${data.postId}`);
-		}, 1500);
+			// Redirect to feed with highlight
+			setTimeout(() => {
+				router.push(`/feed?highlight=${data.postId}`);
+			}, 1500);
 		} catch (error) {
 			console.error("Error creating post:", error);
-			toast.custom(() => (
-				<ErrorToast
-					title="Failed to Create Post"
-					message={error instanceof Error ? error.message : "Please try again"}
-				/>
-			));
+			toast.custom(
+				() => (
+					<ErrorToast
+						title="Failed to Create Post"
+						message={
+							error instanceof Error ? error.message : "Please try again"
+						}
+					/>
+				),
+				{ duration: 5000 },
+			);
 		} finally {
 			setIsSubmitting(false);
 		}
@@ -684,33 +864,155 @@ export default function CreatePostPage() {
 
 				{/* Professional Roles (Portfolio only) - MOVED ABOVE CONTENT */}
 				{postType === "PORTFOLIO" && (
-					<div className="rounded-xl border border-gray-200 bg-white p-6 shadow-sm">
-						<div className="mb-2 block font-medium text-gray-700 text-sm">
-							Tag Professional Roles
-							<span className="ml-1 text-red-500">*</span>
-						</div>
-						<p className="mb-3 text-gray-500 text-xs">
-							Select which professional roles this work represents
-						</p>
+					<>
+						<div className="rounded-xl border border-gray-200 bg-white p-6 shadow-sm">
+							<div className="mb-2 block font-medium text-gray-700 text-sm">
+								Tag Professional Roles
+								<span className="ml-1 text-red-500">*</span>
+							</div>
+							<p className="mb-3 text-gray-500 text-xs">
+								Select which professional roles this work represents
+							</p>
 
-						<div className="flex flex-wrap gap-2">
-							{userRoles.map((role) => (
-								<button
-									key={role.id}
-									type="button"
-									onClick={() => handleRoleToggle(role.id)}
-									className={`inline-flex items-center gap-1.5 rounded-full px-3 py-1.5 text-sm transition-all ${
-										selectedRoles.includes(role.id)
-											? "bg-purple-100 text-purple-700 ring-2 ring-purple-500"
-											: "bg-gray-100 text-gray-700 hover:bg-gray-200"
-									}`}
-								>
-									<role.icon className="h-3.5 w-3.5" />
-									<span>{role.name}</span>
-								</button>
-							))}
+							{isLoadingRoles ? (
+								<div className="flex items-center justify-center py-4">
+									<Loader2 className="h-5 w-5 animate-spin text-gray-400" />
+									<span className="ml-2 text-gray-500 text-sm">
+										Loading roles...
+									</span>
+								</div>
+							) : userRoles.length === 0 ? (
+								<div className="rounded-lg border border-red-200 bg-red-50 p-4">
+									<div className="flex items-start gap-3">
+										<AlertCircle className="mt-0.5 h-5 w-5 flex-shrink-0 text-red-600" />
+										<div className="flex-1">
+											<p className="font-medium text-red-800 text-sm">
+												No Professional Roles Selected
+											</p>
+											<p className="mt-1 text-red-700 text-xs">
+												You need at least one professional role to create a
+												portfolio post. Please add your roles first.
+											</p>
+											<Link
+												href={`/user/${currentUser?.id}/profession`}
+												className="mt-3 inline-flex items-center gap-1.5 rounded-lg bg-red-600 px-3 py-1.5 text-sm text-white transition-colors hover:bg-red-700"
+											>
+												<Plus className="h-4 w-4" />
+												<span>Add Professional Role</span>
+											</Link>
+										</div>
+									</div>
+								</div>
+							) : (
+								<div className="space-y-3">
+									<div className="flex flex-wrap gap-2">
+										{userRoles.map((role) => (
+											<button
+												key={role.id}
+												type="button"
+												onClick={() => handleRoleToggle(role.id)}
+												className={`inline-flex items-center gap-1.5 rounded-full px-3 py-1.5 text-sm transition-all ${
+													selectedRoles.includes(role.id)
+														? "bg-purple-100 text-purple-700 ring-2 ring-purple-500"
+														: "bg-gray-100 text-gray-700 hover:bg-gray-200"
+												}`}
+											>
+												{role.icon && <span>{role.icon}</span>}
+												<span>{role.name}</span>
+											</button>
+										))}
+
+										{userRoles.length < 3 && (
+											<Link
+												href={`/user/${currentUser?.id}/profession`}
+												className="inline-flex items-center gap-1.5 rounded-full border-2 border-purple-300 border-dashed bg-white px-3 py-1.5 text-purple-600 text-sm transition-colors hover:border-purple-400 hover:bg-purple-50"
+											>
+												<Plus className="h-3.5 w-3.5" />
+												<span>Add Role</span>
+											</Link>
+										)}
+									</div>
+								</div>
+							)}
 						</div>
-					</div>
+
+						{/* Portfolio Form Sections */}
+						<div className="space-y-6">
+							<div className="rounded-xl border border-gray-200 bg-white p-6 shadow-sm">
+								<EssentialInfoSection
+									projectTitle={projectTitle}
+									setProjectTitle={setProjectTitle}
+									projectType={projectType}
+									setProjectType={setProjectType}
+									userRole={userRole}
+									setUserRole={setUserRole}
+									projectStatus={projectStatus}
+									setProjectStatus={setProjectStatus}
+								/>
+							</div>
+
+							<div className="rounded-xl border border-gray-200 bg-white p-6 shadow-sm">
+								<TimelineSection
+									startDate={startDate}
+									setStartDate={setStartDate}
+									endDate={endDate}
+									setEndDate={setEndDate}
+									duration={duration}
+									setDuration={setDuration}
+								/>
+							</div>
+
+							<div className="rounded-xl border border-gray-200 bg-white p-6 shadow-sm">
+								<TeamCollaborationSection
+									isTeamProject={isTeamProject}
+									setIsTeamProject={setIsTeamProject}
+									teamSize={teamSize}
+									setTeamSize={setTeamSize}
+									responsibilities={responsibilities}
+									setResponsibilities={setResponsibilities}
+									keyContributions={keyContributions}
+									setKeyContributions={setKeyContributions}
+								/>
+							</div>
+
+							<div className="rounded-xl border border-gray-200 bg-white p-6 shadow-sm">
+								<TechnicalDetailsSection
+									technologies={technologies}
+									setTechnologies={setTechnologies}
+									tools={tools}
+									setTools={setTools}
+									skills={skills}
+									setSkills={setSkills}
+								/>
+							</div>
+
+							<div className="rounded-xl border border-gray-200 bg-white p-6 shadow-sm">
+								<ProjectLinksSection
+									liveUrl={liveUrl}
+									setLiveUrl={setLiveUrl}
+									repositoryUrl={repositoryUrl}
+									setRepositoryUrl={setRepositoryUrl}
+									caseStudyUrl={caseStudyUrl}
+									setCaseStudyUrl={setCaseStudyUrl}
+								/>
+							</div>
+
+							<div className="rounded-xl border border-gray-200 bg-white p-6 shadow-sm">
+								<ProjectStorySection
+									problemStatement={problemStatement}
+									setProblemStatement={setProblemStatement}
+									solution={solution}
+									setSolution={setSolution}
+									impact={impact}
+									setImpact={setImpact}
+									challenges={challenges}
+									setChallenges={setChallenges}
+									lessonsLearned={lessonsLearned}
+									setLessonsLearned={setLessonsLearned}
+								/>
+							</div>
+						</div>
+					</>
 				)}
 
 				{/* Content */}

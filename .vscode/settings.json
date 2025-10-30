@@ -10,6 +10,8 @@
 	"editor.formatOnSave": true,
 	"typescript.preferences.preferTypeOnlyAutoImports": true,
 	"cSpell.words": [
+		"Cresp",
+		"cuid",
 		"Dailymotion",
 		"waitlist"
 	],

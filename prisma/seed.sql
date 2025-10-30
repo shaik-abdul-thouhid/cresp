@@ -64,6 +64,30 @@ VALUES
     ('action_post_unlike_001', 'post.unlike', 'Post', 'User unliked post', 0, NULL, NOW(), NOW()),
     ('action_post_comment_001', 'post.comment', 'Post', 'User commented on post', 0, NULL, NOW(), NOW()),
     ('action_post_share_001', 'post.share', 'Post', 'User shared post', 0, NULL, NOW(), NOW()),
+    ('action_post_report_001', 'post.report', 'Post', 'User reported post', 0, NULL, NOW(), NOW()),
+    
+    -- Portfolio Post actions
+    ('action_portfolio_create_001', 'portfolio.create', 'Portfolio', 'User created portfolio post', 0, NULL, NOW(), NOW()),
+    ('action_portfolio_update_001', 'portfolio.update', 'Portfolio', 'User updated portfolio post', 0, NULL, NOW(), NOW()),
+    ('action_portfolio_feature_001', 'portfolio.feature', 'Portfolio', 'User featured portfolio post', 0, NULL, NOW(), NOW()),
+    ('action_portfolio_highlight_001', 'portfolio.highlight', 'Portfolio', 'User highlighted portfolio post', 0, NULL, NOW(), NOW()),
+    
+    -- Professional Role actions
+    ('action_role_add_001', 'professional_role.add', 'Professional Role', 'User added professional role', 0, NULL, NOW(), NOW()),
+    ('action_role_update_001', 'professional_role.update', 'Professional Role', 'User updated professional role', 0, NULL, NOW(), NOW()),
+    ('action_role_remove_001', 'professional_role.remove', 'Professional Role', 'User removed professional role', 0, NULL, NOW(), NOW()),
+    ('action_role_set_primary_001', 'professional_role.set_primary', 'Professional Role', 'User set primary role', 0, NULL, NOW(), NOW()),
+    ('action_role_update_status_001', 'professional_role.update_status', 'Professional Role', 'User updated role status', 0, NULL, NOW(), NOW()),
+    
+    -- User Report actions
+    ('action_user_report_001', 'user.report', 'User', 'User reported another user profile', 0, NULL, NOW(), NOW()),
+    
+    -- Collection actions
+    ('action_collection_create_001', 'collection.create', 'Collection', 'User created portfolio collection', 0, NULL, NOW(), NOW()),
+    ('action_collection_update_001', 'collection.update', 'Collection', 'User updated collection', 0, NULL, NOW(), NOW()),
+    ('action_collection_delete_001', 'collection.delete', 'Collection', 'User deleted collection', 0, NULL, NOW(), NOW()),
+    ('action_collection_add_post_001', 'collection.add_post', 'Collection', 'User added post to collection', 0, NULL, NOW(), NOW()),
+    ('action_collection_remove_post_001', 'collection.remove_post', 'Collection', 'User removed post from collection', 0, NULL, NOW(), NOW()),
 
     -- Admin actions
     ('action_admin_role_assign_001', 'admin.role_assign', 'Admin', 'Admin assigned role', 60, NULL, NOW(), NOW()),
