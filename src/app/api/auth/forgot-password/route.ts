@@ -1,12 +1,12 @@
 import {
-	errorResponse,
-	extractRequestMetadata,
-	successResponse,
-	validationErrorResponse,
+    errorResponse,
+    extractRequestMetadata,
+    successResponse,
+    validationErrorResponse,
 } from "~/lib/api/utils";
 import { generateResetPasswordToken } from "~/lib/auth/jwt";
 import { forgotPasswordSchema } from "~/lib/auth/validation";
-import { sendPasswordResetEmail } from "~/lib/email/sendgrid";
+import { sendPasswordResetEmail } from "~/lib/email/email-service";
 import { ActivityActions, logActivity, logError } from "~/lib/logging/helpers";
 import { db } from "~/server/db";
 

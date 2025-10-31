@@ -1,7 +1,7 @@
 import { cookies } from "next/headers";
 import { cache } from "react";
 import { db } from "~/server/db";
-import { type JWTPayload, verifyToken } from "./jwt";
+import { verifyToken, type JWTPayload } from "./jwt";
 
 // Cached version - prevents duplicate queries in the same request
 export const getCurrentUser = cache(async (): Promise<JWTPayload | null> => {
@@ -29,7 +29,13 @@ export const getCurrentUser = cache(async (): Promise<JWTPayload | null> => {
 
 		return payload;
 	} catch (error) {
-		console.error("Error getting current user:", error);
+		// Suppress errors during build/static generation (expected behavior)
+		if (
+			!(error instanceof Error) ||
+			!error.message?.includes("DYNAMIC_SERVER_USAGE")
+		) {
+			console.error("Error getting current user:", error);
+		}
 		return null;
 	}
 });
@@ -135,7 +141,13 @@ export const getAuthenticatedUser = cache(async () => {
 			user,
 		};
 	} catch (error) {
-		console.error("Error getting authenticated user:", error);
+		// Suppress errors during build/static generation (expected behavior)
+		if (
+			!(error instanceof Error) ||
+			!error.message?.includes("DYNAMIC_SERVER_USAGE")
+		) {
+			console.error("Error getting authenticated user:", error);
+		}
 		return null;
 	}
 });

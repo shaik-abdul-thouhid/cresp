@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { sendWelcomeEmail } from "~/lib/email/sendgrid";
+import { sendWelcomeEmail } from "~/lib/email/email-service";
 import { ActivityActions, logActivity } from "~/lib/logging/helpers";
 import { updateReferralMilestone } from "~/lib/referral";
 import { db } from "~/server/db";

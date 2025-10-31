@@ -1,13 +1,15 @@
 import "~/styles/globals.css";
 
-import type { Metadata } from "next";
+import type { Metadata, Viewport } from "next";
 import { Dancing_Script, Geist, Inter } from "next/font/google";
 import { Toaster } from "sonner";
 
 import { QueryProvider } from "~/components/providers/query-provider";
+import { env } from "~/env";
 import { TRPCReactProvider } from "~/trpc/react";
 
 export const metadata: Metadata = {
+	metadataBase: new URL(env.NEXT_PUBLIC_APP_URL ?? "http://localhost:3000"),
 	title: "Cresp - Showcase, Recognition, Collaboration",
 	description:
 		"A creative social media platform for directors, actors, writers, singers, photographers, and all creative professionals. Showcase your work, gain recognition, and collaborate on amazing projects.",
@@ -60,13 +62,14 @@ export const metadata: Metadata = {
 		{ rel: "apple-touch-icon", url: "/images/sp.png" },
 		{ rel: "icon", url: "/images/sp.svg", type: "image/svg+xml" },
 	],
-	viewport: {
-		width: "device-width",
-		initialScale: 1,
-		maximumScale: 5,
-		userScalable: true,
-		viewportFit: "cover",
-	},
+};
+
+export const viewport: Viewport = {
+	width: "device-width",
+	initialScale: 1,
+	maximumScale: 5,
+	userScalable: true,
+	viewportFit: "cover",
 	themeColor: [
 		{ media: "(prefers-color-scheme: light)", color: "#8b5cf6" },
 		{ media: "(prefers-color-scheme: dark)", color: "#1e1b4b" },
@@ -100,7 +103,10 @@ export default function RootLayout({
 			<head>
 				<meta name="mobile-web-app-capable" content="yes" />
 				<meta name="apple-mobile-web-app-capable" content="yes" />
-				<meta name="apple-mobile-web-app-status-bar-style" content="default" />
+				<meta
+					name="apple-mobile-web-app-status-bar-style"
+					content="default"
+				/>
 				<meta name="apple-mobile-web-app-title" content="Cresp" />
 				<link rel="manifest" href="/manifest.json" />
 			</head>
@@ -116,7 +122,8 @@ export default function RootLayout({
 							background: "white",
 							border: "1px solid #e5e7eb",
 							color: "#1f2937",
-							boxShadow: "0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05)",
+							boxShadow:
+								"0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05)",
 						},
 						className: "font-medium",
 					}}

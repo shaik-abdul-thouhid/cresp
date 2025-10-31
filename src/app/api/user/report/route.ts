@@ -4,9 +4,9 @@ import { ActivityActions, logActivity } from "~/lib/logging";
 import { db } from "~/server/db";
 
 export async function POST(request: Request) {
+	const currentUser = await getCurrentUser();
+	
 	try {
-		const currentUser = await getCurrentUser();
-
 		if (!currentUser) {
 			await logActivity({
 				action: ActivityActions.USER_REPORT,

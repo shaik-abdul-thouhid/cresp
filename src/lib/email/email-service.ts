@@ -1,43 +1,129 @@
-import sgMail from "@sendgrid/mail";
+// ============================================
+// EMAIL SERVICE - Main email manager with provider abstraction
+// ============================================
 
-const SENDGRID_API_KEY = process.env.SENDGRID_API_KEY || "";
-const FROM_EMAIL = process.env.FROM_EMAIL || "noreply@cresp.app";
-// Use NEXT_PUBLIC_APP_URL for client-accessible URL, fallback to NEXTAUTH_URL or localhost
+import { ConsoleProvider } from "./providers/console";
+import { MailjetProvider } from "./providers/mailjet";
+import { SendGridProvider } from "./providers/sendgrid";
+import type {
+	EmailAddress,
+	EmailOptions,
+	EmailProvider,
+	EmailProviderType,
+	EmailResponse,
+} from "./types";
+
+// Configuration
+const EMAIL_CONFIG = {
+	provider: (process.env.EMAIL_PROVIDER || "mailjet") as EmailProviderType,
+	from: {
+		email: process.env.FROM_EMAIL || "noreply@cresp.app",
+		name: process.env.FROM_NAME || "Cresp",
+	},
+	mailjet: {
+		apiKey: process.env.MAILJET_API_KEY || "",
+		secretKey: process.env.MAILJET_SECRET_KEY || "",
+	},
+	sendgrid: {
+		apiKey: process.env.SENDGRID_API_KEY || "",
+	},
+};
+
+// Get app URL
 const APP_URL =
 	process.env.NEXT_PUBLIC_APP_URL ||
 	process.env.NEXTAUTH_URL ||
 	"http://localhost:3000";
 
-sgMail.setApiKey(SENDGRID_API_KEY);
+class EmailService {
+	private provider: EmailProvider;
+	private defaultFrom: EmailAddress;
 
-interface EmailOptions {
-	to: string;
-	subject: string;
-	html: string;
-	text?: string;
-}
+	constructor() {
+		this.defaultFrom = EMAIL_CONFIG.from;
+		this.provider = this.initializeProvider();
+	}
 
-async function sendEmail({ to, subject, html, text }: EmailOptions) {
-	try {
-		await sgMail.send({
-			to,
-			from: FROM_EMAIL,
-			subject,
-			html,
-			text: text || html.replace(/<[^>]*>/g, ""), // Strip HTML for text version
-		});
-		return { success: true };
-	} catch (error) {
-		console.error("SendGrid Error:", error);
-		return { success: false, error };
+	private initializeProvider(): EmailProvider {
+		const providerType = EMAIL_CONFIG.provider;
+
+		switch (providerType) {
+			case "mailjet": {
+				const provider = new MailjetProvider(
+					EMAIL_CONFIG.mailjet.apiKey,
+					EMAIL_CONFIG.mailjet.secretKey,
+					this.defaultFrom,
+				);
+
+				if (provider.isConfigured) {
+					console.log("✅ Email provider: Mailjet (configured)");
+					return provider;
+				}
+
+				console.warn("⚠️  Mailjet not configured, falling back to Console");
+				return new ConsoleProvider();
+			}
+
+			case "sendgrid": {
+				const provider = new SendGridProvider(
+					EMAIL_CONFIG.sendgrid.apiKey,
+					this.defaultFrom,
+				);
+
+				if (provider.isConfigured) {
+					console.log("✅ Email provider: SendGrid (configured)");
+					return provider;
+				}
+
+				console.warn("⚠️  SendGrid not configured, falling back to Console");
+				return new ConsoleProvider();
+			}
+
+			case "console":
+				console.log("📧 Email provider: Console (development mode)");
+				return new ConsoleProvider();
+
+			default:
+				console.warn(
+					`⚠️  Unknown email provider: ${providerType}, using Console`,
+				);
+				return new ConsoleProvider();
+		}
+	}
+
+	/**
+	 * Send a generic email
+	 */
+	async sendEmail(options: EmailOptions): Promise<EmailResponse> {
+		return this.provider.sendEmail(options);
+	}
+
+	/**
+	 * Get the current provider info
+	 */
+	getProviderInfo() {
+		return {
+			name: this.provider.name,
+			isConfigured: this.provider.isConfigured,
+		};
 	}
 }
 
+// Singleton instance
+const emailService = new EmailService();
+
+// ============================================
+// CONVENIENCE FUNCTIONS FOR COMMON EMAILS
+// ============================================
+
+/**
+ * Send email verification email
+ */
 export async function sendVerificationEmail(
 	email: string,
 	username: string,
-	token: string
-) {
+	token: string,
+): Promise<EmailResponse> {
 	const verificationUrl = `${APP_URL}/verify-email?token=${token}`;
 
 	const html = `
@@ -105,18 +191,22 @@ export async function sendVerificationEmail(
 </html>
   `;
 
-	return sendEmail({
-		to: email,
+	return emailService.sendEmail({
+		to: { email, name: username },
 		subject: "Verify your email address - Cresp",
 		html,
+		text: `Hi ${username}! Thanks for signing up for Cresp. Please verify your email by visiting: ${verificationUrl}`,
 	});
 }
 
+/**
+ * Send password reset email
+ */
 export async function sendPasswordResetEmail(
 	email: string,
 	username: string,
-	token: string
-) {
+	token: string,
+): Promise<EmailResponse> {
 	const resetUrl = `${APP_URL}/reset-password?token=${token}`;
 
 	const html = `
@@ -186,14 +276,21 @@ export async function sendPasswordResetEmail(
 </html>
   `;
 
-	return sendEmail({
-		to: email,
+	return emailService.sendEmail({
+		to: { email, name: username },
 		subject: "Reset your password - Cresp",
 		html,
+		text: `Hi ${username}! We received a request to reset your password. Visit this link to reset: ${resetUrl}`,
 	});
 }
 
-export async function sendWelcomeEmail(email: string, username: string) {
+/**
+ * Send welcome email after email verification
+ */
+export async function sendWelcomeEmail(
+	email: string,
+	username: string,
+): Promise<EmailResponse> {
 	const loginUrl = `${APP_URL}/login`;
 
 	const html = `
@@ -272,9 +369,14 @@ export async function sendWelcomeEmail(email: string, username: string) {
 </html>
   `;
 
-	return sendEmail({
-		to: email,
+	return emailService.sendEmail({
+		to: { email, name: username },
 		subject: "Welcome to Cresp! 🎉",
 		html,
+		text: `Hey ${username}! Your email has been verified. Welcome to Cresp! Get started at: ${loginUrl}`,
 	});
 }
+
+// Export the email service instance
+export { emailService };
+

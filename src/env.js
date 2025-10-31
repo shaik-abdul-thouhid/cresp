@@ -12,11 +12,24 @@ export const env = createEnv({
 			.enum(["development", "test", "production"])
 			.default("development"),
 		JWT_SECRET: z.string().min(1),
-		// SendGrid is optional for prototype mode
+
+		// Email configuration - all optional
+		EMAIL_PROVIDER: z
+			.enum(["mailjet", "sendgrid", "console"])
+			.default("mailjet")
+			.optional(),
+		FROM_EMAIL: z.email().optional(),
+		FROM_NAME: z.string().optional(),
+
+		// Mailjet (recommended)
+		MAILJET_API_KEY: z.string().min(1).optional(),
+		MAILJET_SECRET_KEY: z.string().min(1).optional(),
+
+		// SendGrid (alternative)
 		SENDGRID_API_KEY: z.string().min(1).optional(),
-		FROM_EMAIL: z.string().email().optional(),
+
 		// Legacy - optional, auto-detected from request if not set
-		NEXTAUTH_URL: z.string().url().optional(),
+		NEXTAUTH_URL: z.url().optional(),
 	},
 
 	/**
@@ -27,7 +40,7 @@ export const env = createEnv({
 	client: {
 		// App URL - optional, auto-detected from request host if not set
 		// Use this for local network testing (e.g., http://192.168.1.100:3000)
-		NEXT_PUBLIC_APP_URL: z.string().url().optional(),
+		NEXT_PUBLIC_APP_URL: z.url().optional(),
 	},
 
 	/**
@@ -38,8 +51,12 @@ export const env = createEnv({
 		DATABASE_URL: process.env.DATABASE_URL,
 		NODE_ENV: process.env.NODE_ENV,
 		JWT_SECRET: process.env.JWT_SECRET,
-		SENDGRID_API_KEY: process.env.SENDGRID_API_KEY,
+		EMAIL_PROVIDER: process.env.EMAIL_PROVIDER,
 		FROM_EMAIL: process.env.FROM_EMAIL,
+		FROM_NAME: process.env.FROM_NAME,
+		MAILJET_API_KEY: process.env.MAILJET_API_KEY,
+		MAILJET_SECRET_KEY: process.env.MAILJET_SECRET_KEY,
+		SENDGRID_API_KEY: process.env.SENDGRID_API_KEY,
 		NEXTAUTH_URL: process.env.NEXTAUTH_URL,
 		NEXT_PUBLIC_APP_URL: process.env.NEXT_PUBLIC_APP_URL,
 	},

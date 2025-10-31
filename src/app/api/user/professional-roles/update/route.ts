@@ -1,17 +1,17 @@
-import { type NextRequest, NextResponse } from "next/server";
+import { NextResponse, type NextRequest } from "next/server";
+import { z } from "zod";
 import { getCurrentUser } from "~/lib/auth/get-user";
 import { ActivityActions, logActivity } from "~/lib/logging";
 import { db } from "~/server/db";
-import { z } from "zod";
 
 const updateRolesSchema = z.object({
 	professionalRoleIds: z.array(z.string()).min(1).max(3),
 });
 
 export async function POST(req: NextRequest) {
-	try {
-		const currentUser = await getCurrentUser();
+	const currentUser = await getCurrentUser();
 
+	try {
 		if (!currentUser) {
 			await logActivity({
 				action: ActivityActions.PROFESSIONAL_ROLE_UPDATE,

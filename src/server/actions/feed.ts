@@ -43,6 +43,7 @@ export async function loadMorePosts(cursor: string, sortBy: string = "latest") {
 						professionalRole: true,
 					},
 				},
+				portfolioDetails: true,
 				media: true,
 				hashtags: {
 					include: {
